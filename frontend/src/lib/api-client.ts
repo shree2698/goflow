@@ -124,6 +124,31 @@ class ApiClient {
     }
     return res.json();
   }
+
+  async patch<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
+    const res = await this.handleRequest(`${this.baseUrl}${endpoint}`, {
+      method: "PATCH",
+      headers: this.getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!res.ok) {
+      const err: ApiError = await res.json().catch(() => ({ success: false, error: { message: "Network error" } }));
+      throw err;
+    }
+    return res.json();
+  }
+
+  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+    const res = await this.handleRequest(`${this.baseUrl}${endpoint}`, {
+      method: "DELETE",
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) {
+      const err: ApiError = await res.json().catch(() => ({ success: false, error: { message: "Network error" } }));
+      throw err;
+    }
+    return res.json();
+  }
 }
 
 export const apiClient = new ApiClient();

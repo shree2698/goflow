@@ -47,6 +47,7 @@ func (s *authService) Register(ctx context.Context, req *domain.RegisterRequest)
 		Email:        req.Email,
 		PasswordHash: hashedPassword,
 		FullName:     req.FullName,
+		Role:         "employee",
 		Timezone:     timezone,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),

@@ -34,7 +34,7 @@ func main() {
 
 	ctx := context.Background()
 
-	// Ensure users table exists
+	// Ensure users table exists with role column
 	createUsersTableSQL := `
 		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 		CREATE TABLE IF NOT EXISTS users (
@@ -42,15 +42,24 @@ func main() {
 			email VARCHAR(255) UNIQUE NOT NULL,
 			password_hash VARCHAR(255) NOT NULL,
 			full_name VARCHAR(255) NOT NULL,
+			role VARCHAR(50) NOT NULL DEFAULT 'employee',
 			avatar_url VARCHAR(255),
 			timezone VARCHAR(50) DEFAULT 'UTC',
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 		);
+		ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) NOT NULL DEFAULT 'employee';
 		CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 	`
 	if _, err := db.Exec(ctx, createUsersTableSQL); err != nil {
 		log.Fatal().Err(err).Msg("Failed to ensure users table exists")
+	}
+
+	type EmployeeSeed struct {
+		Email    string
+		Password string
+		FullName string
+		Role     string
 	}
 
 	employees := []EmployeeSeed{
@@ -58,16 +67,19 @@ func main() {
 			Email:    "admin@goflow.com",
 			Password: "Password123!",
 			FullName: "System Administrator",
+			Role:     "admin",
 		},
 		{
 			Email:    "employee1@goflow.com",
 			Password: "Password123!",
 			FullName: "Alice Smith",
+			Role:     "employee",
 		},
 		{
 			Email:    "employee2@goflow.com",
 			Password: "Password123!",
 			FullName: "Bob Jones",
+			Role:     "employee",
 		},
 	}
 
@@ -79,13 +91,13 @@ func main() {
 		}
 
 		query := `
-			INSERT INTO users (email, password_hash, full_name, timezone)
-			VALUES ($1, $2, $3, 'UTC')
+			INSERT INTO users (email, password_hash, full_name, role, timezone)
+			VALUES ($1, $2, $3, $4, 'UTC')
 			ON CONFLICT (email) DO UPDATE 
-			SET password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name;
+			SET password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name, role = EXCLUDED.role;
 		`
 
-		_, err = db.Exec(ctx, query, emp.Email, hash, emp.FullName)
+		_, err = db.Exec(ctx, query, emp.Email, hash, emp.FullName, emp.Role)
 		if err != nil {
 			log.Error().Err(err).Str("email", emp.Email).Msg("Failed to seed employee user")
 		} else {

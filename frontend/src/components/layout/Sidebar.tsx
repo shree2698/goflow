@@ -38,6 +38,9 @@ export const Sidebar: React.FC = () => {
           <Link href="/notifications" className="block px-3 py-2 rounded-md hover:bg-hover text-foreground-secondary hover:text-foreground">
             Notifications
           </Link>
+          <Link href="/employees" className="block px-3 py-2 rounded-md hover:bg-hover text-foreground-secondary hover:text-foreground">
+            Employees Management
+          </Link>
         </nav>
       </div>
       <div className="p-2 text-xs text-foreground-secondary border-t border-border">

@@ -67,6 +67,12 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Patch("/me", userHandler.UpdateMe)
 			r.Get("/me/notification-preferences", notifHandler.GetPreferences)
 			r.Patch("/me/notification-preferences", notifHandler.UpdatePreferences)
+
+			// Admin Employee Management
+			r.Get("/", userHandler.ListUsers)
+			r.Post("/", userHandler.CreateUser)
+			r.Patch("/{id}", userHandler.UpdateUser)
+			r.Delete("/{id}", userHandler.DeleteUser)
 		})
 
 		r.Route("/analytics", func(r chi.Router) {

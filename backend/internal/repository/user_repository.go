@@ -20,9 +20,12 @@ func NewUserRepository(db *pgxpool.Pool) domain.UserRepository {
 }
 
 func (r *userRepository) Create(user *domain.User) error {
+	if user.Role == "" {
+		user.Role = "employee"
+	}
 	query := `
-		INSERT INTO users (id, email, password_hash, full_name, avatar_url, timezone, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO users (id, email, password_hash, full_name, role, avatar_url, timezone, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id, created_at, updated_at
 	`
 	if user.ID == uuid.Nil {
@@ -36,6 +39,7 @@ func (r *userRepository) Create(user *domain.User) error {
 		user.Email,
 		user.PasswordHash,
 		user.FullName,
+		user.Role,
 		user.AvatarURL,
 		user.Timezone,
 		user.CreatedAt,
@@ -47,7 +51,7 @@ func (r *userRepository) Create(user *domain.User) error {
 
 func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, full_name, avatar_url, timezone, created_at, updated_at
+		SELECT id, email, password_hash, full_name, role, avatar_url, timezone, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
@@ -57,6 +61,7 @@ func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 		&user.Email,
 		&user.PasswordHash,
 		&user.FullName,
+		&user.Role,
 		&user.AvatarURL,
 		&user.Timezone,
 		&user.CreatedAt,
@@ -75,7 +80,7 @@ func (r *userRepository) GetByID(id uuid.UUID) (*domain.User, error) {
 
 func (r *userRepository) GetByEmail(email string) (*domain.User, error) {
 	query := `
-		SELECT id, email, password_hash, full_name, avatar_url, timezone, created_at, updated_at
+		SELECT id, email, password_hash, full_name, role, avatar_url, timezone, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
@@ -85,6 +90,7 @@ func (r *userRepository) GetByEmail(email string) (*domain.User, error) {
 		&user.Email,
 		&user.PasswordHash,
 		&user.FullName,
+		&user.Role,
 		&user.AvatarURL,
 		&user.Timezone,
 		&user.CreatedAt,
@@ -101,11 +107,48 @@ func (r *userRepository) GetByEmail(email string) (*domain.User, error) {
 	return user, nil
 }
 
+func (r *userRepository) ListAll() ([]*domain.User, error) {
+	query := `
+		SELECT id, email, password_hash, full_name, role, avatar_url, timezone, created_at, updated_at
+		FROM users
+		ORDER BY created_at DESC
+	`
+	rows, err := r.db.Query(context.Background(), query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*domain.User
+	for rows.Next() {
+		user := &domain.User{}
+		if err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.PasswordHash,
+			&user.FullName,
+			&user.Role,
+			&user.AvatarURL,
+			&user.Timezone,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
 func (r *userRepository) Update(user *domain.User) error {
+	if user.Role == "" {
+		user.Role = "employee"
+	}
 	query := `
 		UPDATE users
-		SET email = $1, password_hash = $2, full_name = $3, avatar_url = $4, timezone = $5, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $6
+		SET email = $1, password_hash = $2, full_name = $3, role = $4, avatar_url = $5, timezone = $6, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $7
 		RETURNING updated_at
 	`
 	err := r.db.QueryRow(
@@ -114,6 +157,7 @@ func (r *userRepository) Update(user *domain.User) error {
 		user.Email,
 		user.PasswordHash,
 		user.FullName,
+		user.Role,
 		user.AvatarURL,
 		user.Timezone,
 		user.ID,
