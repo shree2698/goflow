@@ -33,6 +33,12 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 	// User dependencies
 	userHandler := NewUserHandler(userRepo)
 
+	// Notification dependencies
+	notifRepo := repository.NewNotificationRepository(db)
+	prefRepo := repository.NewNotificationPreferenceRepository(db)
+	notifService := service.NewNotificationService(notifRepo, prefRepo)
+	notifHandler := NewNotificationHandler(notifService)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", healthHandler.HealthCheck)
 
@@ -47,8 +53,18 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Use(middleware.RequireAuth(jwtService))
 			r.Get("/me", userHandler.GetMe)
 			r.Patch("/me", userHandler.UpdateMe)
+			r.Get("/me/notification-preferences", notifHandler.GetPreferences)
+			r.Patch("/me/notification-preferences", notifHandler.UpdatePreferences)
+		})
+
+		r.Route("/notifications", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtService))
+			r.Get("/", notifHandler.GetNotifications)
+			r.Patch("/read-all", notifHandler.MarkAllAsRead)
+			r.Patch("/{id}/read", notifHandler.MarkAsRead)
 		})
 	})
+
 
 	return r
 }

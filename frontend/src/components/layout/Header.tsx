@@ -4,6 +4,7 @@ import React from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 
 export const Header: React.FC = () => {
   const { user, clearAuth } = useAuthStore();
@@ -24,7 +25,9 @@ export const Header: React.FC = () => {
         />
       </div>
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <span className="inline-block w-3 h-3 bg-emerald-500 rounded-full" title="Live WS Connected"></span>
+
         <div className="w-8 h-8 rounded-full bg-hover border border-border flex items-center justify-center text-sm font-semibold text-accent uppercase">
           {user?.full_name ? user.full_name[0] : "U"}
         </div>
