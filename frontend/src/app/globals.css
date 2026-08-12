@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --canvas: 350 25% 5%;
+  --card: 350 20% 9%;
+  --hover: 350 18% 15%;
+  --border: 350 15% 25%;
+  --foreground-primary: 0 0% 98%;
+  --foreground-secondary: 350 10% 68%;
+  --primary-accent: 348 85% 52%;
+  --accent-hover: 348 85% 44%;
+}
+
+body {
+  background-color: hsl(var(--canvas));
+  color: hsl(var(--foreground-primary));
+  font-family: var(--font-inter), sans-serif;
+  min-height: 100vh;
+}
+
+code, pre {
+  font-family: var(--font-mono), monospace;
+}
