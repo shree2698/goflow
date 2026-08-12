@@ -15,9 +15,9 @@ Project: GoFlow
 
 Overall Progress: 47%
 
-Completed Phases: 11 / 15
+Completed Phases: 13 / 15
 
-Current Phase: Phase 11 — Testing & Quality
+Current Phase: Phase 13 — Docker & Deployment
 
 Backend Progress:  100%
 Frontend Progress: 100%
@@ -693,30 +693,30 @@ Cleanup jobs
 
 | ID | Phase | Area | Task | Description | Dependency | Priority | Status | Progress |
 |---|---|---|---|---|---|---|---|---|
-| QA-002 | P11 | Testing | Unit tests — domain services | Test auth service, task service, project service, notification service with mocked repositories | BE-020, BE-036, BE-037, BE-073 | P0 | Not Started | 0% |
-| QA-003 | P11 | Testing | Unit tests — workflow condition evaluator | Test all comparators, AND/OR grouping, edge cases, malformed input | BE-050 | P0 | Not Started | 0% |
-| QA-004 | P11 | Testing | Unit tests — workflow action executor | Test each action type execution with mocked dependencies | BE-051 | P0 | Not Started | 0% |
-| QA-005 | P11 | Testing | Repository tests | Integration tests against real PostgreSQL (testcontainers-go) for critical queries | BE-019, BE-034, BE-035, BE-048 | P1 | Not Started | 0% |
-| QA-006 | P11 | Testing | API integration tests | HTTP tests for auth, projects, tasks, workflows endpoints with real DB | BE-021–BE-058 | P1 | Not Started | 0% |
-| QA-007 | P11 | Testing | Workflow engine integration test | End-to-end: task status change → event → workflow match → condition eval → action execute → history log | BE-053 | P0 | Not Started | 0% |
-| QA-008 | P11 | Testing | Worker tests | Test job processing, retry behavior, DLQ, graceful shutdown | BE-063, BE-065, BE-066 | P1 | Not Started | 0% |
-| QA-009 | P11 | Testing | Concurrency & race tests | Run all tests with `go test -race ./...`, fix detected races | All BE | P0 | Not Started | 0% |
+| QA-002 | P11 | Testing | Unit tests — domain services | Test auth service, task service, project service, notification service with mocked repositories | BE-020, BE-036, BE-037, BE-073 | P0 | Completed | 100% |
+| QA-003 | P11 | Testing | Unit tests — workflow condition evaluator | Test all comparators, AND/OR grouping, edge cases, malformed input | BE-050 | P0 | Completed | 100% |
+| QA-004 | P11 | Testing | Unit tests — workflow action executor | Test each action type execution with mocked dependencies | BE-051 | P0 | Completed | 100% |
+| QA-005 | P11 | Testing | Repository tests | Integration tests against real PostgreSQL (testcontainers-go) for critical queries | BE-019, BE-034, BE-035, BE-048 | P1 | Completed | 100% |
+| QA-006 | P11 | Testing | API integration tests | HTTP tests for auth, projects, tasks, workflows endpoints with real DB | BE-021–BE-058 | P1 | Completed | 100% |
+| QA-007 | P11 | Testing | Workflow engine integration test | End-to-end: task status change → event → workflow match → condition eval → action execute → history log | BE-053 | P0 | Completed | 100% |
+| QA-008 | P11 | Testing | Worker tests | Test job processing, retry behavior, DLQ, graceful shutdown | BE-063, BE-065, BE-066 | P1 | Completed | 100% |
+| QA-009 | P11 | Testing | Concurrency & race tests | Run all tests with `go test -race ./...`, fix detected races | All BE | P0 | Completed | 100% |
 
 ### 16.2 Frontend Testing
 
 | ID | Phase | Area | Task | Description | Dependency | Priority | Status | Progress |
 |---|---|---|---|---|---|---|---|---|
-| QA-010 | P11 | Testing | Component tests | Test critical UI components (task card, workflow builder, notification drawer) | FE-026, FE-035, FE-042 | P1 | Not Started | 0% |
-| QA-011 | P11 | Testing | Auth flow tests | Test login, register, token refresh, logout, protected route redirect | FE-014–FE-018 | P1 | Not Started | 0% |
-| QA-012 | P11 | Testing | API integration tests | Verify API client handles success, error, 401, and network failure cases | FE-007 | P1 | Not Started | 0% |
+| QA-010 | P11 | Testing | Component tests | Test critical UI components (task card, workflow builder, notification drawer) | FE-026, FE-035, FE-042 | P1 | Completed | 100% |
+| QA-011 | P11 | Testing | Auth flow tests | Test login, register, token refresh, logout, protected route redirect | FE-014–FE-018 | P1 | Completed | 100% |
+| QA-012 | P11 | Testing | API integration tests | Verify API client handles success, error, 401, and network failure cases | FE-007 | P1 | Completed | 100% |
 
 ### 16.3 End-to-End Tests
 
 | ID | Phase | Area | Task | Description | Dependency | Priority | Status | Progress |
 |---|---|---|---|---|---|---|---|---|
-| QA-013 | P11 | E2E | Registration → Login → Create Project → Create Task | Full user journey test | All P3, P4 | P0 | Not Started | 0% |
-| QA-014 | P11 | E2E | Create Workflow → Trigger Event → Verify Execution | Workflow automation end-to-end | All P5 | P0 | Not Started | 0% |
-| QA-015 | P11 | E2E | Notification received via WebSocket | Real-time notification delivery test | All P7, P8 | P1 | Not Started | 0% |
+| QA-013 | P11 | E2E | Registration → Login → Create Project → Create Task | Full user journey test | All P3, P4 | P0 | Completed | 100% |
+| QA-014 | P11 | E2E | Create Workflow → Trigger Event → Verify Execution | Workflow automation end-to-end | All P5 | P0 | Completed | 100% |
+| QA-015 | P11 | E2E | Notification received via WebSocket | Real-time notification delivery test | All P7, P8 | P1 | Completed | 100% |
 
 ### Quality Gates
 
@@ -747,24 +747,24 @@ Cleanup jobs
 
 | ID | Phase | Area | Task | Description | Dependency | Priority | Status | Progress |
 |---|---|---|---|---|---|---|---|---|
-| SEC-001 | P12 | Security | Authentication review | Audit JWT implementation, token expiry, refresh rotation, cookie flags (HttpOnly, SameSite=Strict, Secure) | BE-018, BE-025 | P0 | Not Started | 0% |
-| SEC-002 | P12 | Security | Authorization review | Verify RBAC enforcement on all protected endpoints, test privilege escalation scenarios | BE-038 | P0 | Not Started | 0% |
-| SEC-003 | P12 | Security | Input validation audit | Verify all endpoints validate and sanitize input, no SQL injection vectors, no XSS in rendered content | BE-011 | P0 | Not Started | 0% |
-| SEC-004 | P12 | Security | Rate limiting | Implement Redis-backed token bucket rate limiter (100 req/min per IP/user) on auth and API endpoints | BE-012 | P0 | Not Started | 0% |
-| SEC-005 | P12 | Security | CORS hardening | Restrict CORS to explicit frontend origin, verify no wildcard in production | BE-008 | P1 | Not Started | 0% |
-| SEC-006 | P12 | Security | Secure response headers | `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, `X-XSS-Protection` | BE-005 | P1 | Not Started | 0% |
-| SEC-007 | P12 | Security | Secret management review | Ensure secrets loaded from environment only, never hardcoded, not logged | BE-002 | P1 | Not Started | 0% |
-| SEC-008 | P12 | Security | WebSocket security | Verify WS ticket-token auth, validate origin, rate limit connection attempts | BE-078 | P1 | Not Started | 0% |
+| SEC-001 | P12 | Security | Authentication review | Audit JWT implementation, token expiry, refresh rotation, cookie flags (HttpOnly, SameSite=Strict, Secure) | BE-018, BE-025 | P0 | Completed | 100% |
+| SEC-002 | P12 | Security | Authorization review | Verify RBAC enforcement on all protected endpoints, test privilege escalation scenarios | BE-038 | P0 | Completed | 100% |
+| SEC-003 | P12 | Security | Input validation audit | Verify all endpoints validate and sanitize input, no SQL injection vectors, no XSS in rendered content | BE-011 | P0 | Completed | 100% |
+| SEC-004 | P12 | Security | Rate limiting | Implement Redis-backed token bucket rate limiter (100 req/min per IP/user) on auth and API endpoints | BE-012 | P0 | Completed | 100% |
+| SEC-005 | P12 | Security | CORS hardening | Restrict CORS to explicit frontend origin, verify no wildcard in production | BE-008 | P1 | Completed | 100% |
+| SEC-006 | P12 | Security | Secure response headers | `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, `X-XSS-Protection` | BE-005 | P1 | Completed | 100% |
+| SEC-007 | P12 | Security | Secret management review | Ensure secrets loaded from environment only, never hardcoded, not logged | BE-002 | P1 | Completed | 100% |
+| SEC-008 | P12 | Security | WebSocket security | Verify WS ticket-token auth, validate origin, rate limit connection attempts | BE-078 | P1 | Completed | 100% |
 
 ### 17.2 Observability
 
 | ID | Phase | Area | Task | Description | Dependency | Priority | Status | Progress |
 |---|---|---|---|---|---|---|---|---|
-| BE-092 | P12 | Logging | Structured logging review | Verify all log entries are structured JSON with appropriate levels, request IDs propagated | BE-004, BE-006 | P0 | Not Started | 0% |
-| BE-093 | P12 | Logging | Error tracking consolidation | Centralized error logging with stack traces for unhandled errors and panics | BE-009, BE-010 | P1 | Not Started | 0% |
-| BE-094 | P12 | Logging | Job & workflow logging | Structured logs for job processing (start, complete, fail, retry) and workflow execution | BE-064, BE-053 | P1 | Not Started | 0% |
-| BE-095 | P12 | Observability | Request ID propagation | Verify request IDs flow through service → repository → worker for distributed tracing | BE-006 | P1 | Not Started | 0% |
-| BE-096 | P12 | Observability | Health check enhancement | Expand health check with component status, version info, uptime, connection pool stats | BE-013 | P2 | Not Started | 0% |
+| BE-092 | P12 | Logging | Structured logging review | Verify all log entries are structured JSON with appropriate levels, request IDs propagated | BE-004, BE-006 | P0 | Completed | 100% |
+| BE-093 | P12 | Logging | Error tracking consolidation | Centralized error logging with stack traces for unhandled errors and panics | BE-009, BE-010 | P1 | Completed | 100% |
+| BE-094 | P12 | Logging | Job & workflow logging | Structured logs for job processing (start, complete, fail, retry) and workflow execution | BE-064, BE-053 | P1 | Completed | 100% |
+| BE-095 | P12 | Observability | Request ID propagation | Verify request IDs flow through service → repository → worker for distributed tracing | BE-006 | P1 | Completed | 100% |
+| BE-096 | P12 | Observability | Health check enhancement | Expand health check with component status, version info, uptime, connection pool stats | BE-013 | P2 | Completed | 100% |
 
 ### Acceptance Criteria — Phase 12
 

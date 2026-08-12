@@ -19,10 +19,12 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 
 	r := chi.NewRouter()
 
+	r.Use(middleware.SecurityHeaders)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logging(log))
 	r.Use(middleware.Recovery)
 	r.Use(middleware.CORS(cfg.CORS))
+
 
 	healthHandler := NewHealthHandler(db, redisClient)
 
