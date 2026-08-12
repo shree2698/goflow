@@ -1,12 +1,17 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/shree2698/goflow/backend/internal/config"
 	"github.com/shree2698/goflow/backend/internal/handler/middleware"
+	"github.com/shree2698/goflow/backend/internal/repository"
+	"github.com/shree2698/goflow/backend/internal/service"
+	"github.com/shree2698/goflow/backend/pkg/jwt"
 )
 
 func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisClient *redis.Client) *chi.Mux {
@@ -19,8 +24,30 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 
 	healthHandler := NewHealthHandler(db, redisClient)
 
+	// Auth dependencies
+	userRepo := repository.NewUserRepository(db)
+	jwtService := jwt.NewJWTService(cfg.Server.JWTSecret, 15*time.Minute, 7*24*time.Hour) // Example durations
+	authService := service.NewAuthService(userRepo, jwtService)
+	authHandler := NewAuthHandler(authService)
+
+	// User dependencies
+	userHandler := NewUserHandler(userRepo)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", healthHandler.HealthCheck)
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", authHandler.Register)
+			r.Post("/login", authHandler.Login)
+			r.Post("/refresh", authHandler.Refresh)
+			r.Post("/logout", authHandler.Logout)
+		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtService))
+			r.Get("/me", userHandler.GetMe)
+			r.Patch("/me", userHandler.UpdateMe)
+		})
 	})
 
 	return r
