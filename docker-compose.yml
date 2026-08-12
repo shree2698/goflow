@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-goflow}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -26,7 +26,8 @@ services:
     container_name: goflow-redis
     command: redis-server --requirepass "${REDIS_PASSWORD:-}"
     ports:
-      - "6379:6379"
+      - "6380:6379"
+
     volumes:
       - redisdata:/data
     healthcheck:

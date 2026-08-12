@@ -49,7 +49,24 @@ If you prefer to run services manually for local development:
 
 ---
 
+### Quick Single-Command Development Workspace
+
+To start both the **Backend API** (`http://localhost:8080`) and **Frontend Next.js** (`http://localhost:3000`) concurrently in a single terminal:
+
+1. Install root workspace runner dependencies once:
+   ```bash
+   npm install
+   ```
+
+2. Run both applications together:
+   ```bash
+   npm run dev
+   ```
+
+---
+
 ### 1. Database & Cache Infrastructure
+
 
 Start PostgreSQL and Redis via Docker Compose:
 ```bash
