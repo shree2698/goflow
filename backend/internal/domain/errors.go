@@ -1,5 +1,12 @@
 package domain
 
+import "errors"
+
+var (
+	ErrNotFound  = errors.New("resource not found")
+	ErrForbidden = errors.New("forbidden")
+)
+
 type FieldError struct {
 	Field string `json:"field"`
 	Issue string `json:"issue"`

@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"goflow/internal/domain"
-	"goflow/internal/repository"
+	"github.com/shree2698/goflow/backend/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/repository"
 
 	"github.com/google/uuid"
 )

@@ -29,12 +29,12 @@ func NewHandler(hub *Hub) *Handler {
 func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
 	userIDStr, ok := r.Context().Value("user_id").(string)
 	if !ok {
-		response.Error(w, domain.ErrUnauthorized)
+		response.Error(w, domain.NewUnauthorized("Unauthorized"))
 		return
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		response.Error(w, domain.ErrUnauthorized)
+		response.Error(w, domain.NewUnauthorized("Invalid user ID"))
 		return
 	}
 

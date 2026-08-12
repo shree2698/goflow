@@ -48,15 +48,21 @@ func NoContent(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func Error(w http.ResponseWriter, err *domain.AppError) {
+func Error(w http.ResponseWriter, err error) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(err.StatusCode)
+	
+	appErr, ok := err.(*domain.AppError)
+	if !ok {
+		appErr = domain.NewInternal(err.Error())
+	}
+
+	w.WriteHeader(appErr.StatusCode)
 	json.NewEncoder(w).Encode(ErrorResponse{
 		Success: false,
 		Error: ErrorBody{
-			Code:    err.Code,
-			Message: err.Message,
-			Details: err.Details,
+			Code:    appErr.Code,
+			Message: appErr.Message,
+			Details: appErr.Details,
 		},
 	})
 }

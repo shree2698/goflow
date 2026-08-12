@@ -155,7 +155,7 @@ func (r *projectRepository) ListMembers(ctx context.Context, projectID uuid.UUID
 			return nil, err
 		}
 		if avatar != nil {
-			m.User.AvatarURL = *avatar
+			m.User.AvatarURL = avatar
 		}
 		m.User.ID = m.UserID
 		members = append(members, m)

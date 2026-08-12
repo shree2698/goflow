@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"goflow/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/domain"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"

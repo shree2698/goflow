@@ -30,7 +30,7 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 
 	// Auth dependencies
 	userRepo := repository.NewUserRepository(db)
-	jwtService := jwt.NewJWTService(cfg.Server.JWTSecret, 15*time.Minute, 7*24*time.Hour) // Example durations
+	jwtService := jwt.NewJWTService(cfg.JWT.Secret, 15*time.Minute, 7*24*time.Hour) // Example durations
 	authService := service.NewAuthService(userRepo, jwtService)
 	authHandler := NewAuthHandler(authService)
 

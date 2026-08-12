@@ -11,6 +11,7 @@ import (
 
 	"github.com/shree2698/goflow/backend/internal/config"
 	"github.com/shree2698/goflow/backend/internal/handler"
+	"github.com/shree2698/goflow/backend/internal/websocket"
 	"github.com/shree2698/goflow/backend/pkg/logger"
 )
 
@@ -36,7 +37,10 @@ func main() {
 	}
 	defer redisClient.Close()
 
-	router := handler.NewRouter(cfg, log, db, redisClient)
+	wsHub := websocket.NewHub(log)
+	go wsHub.Run(context.Background())
+
+	router := handler.NewRouter(cfg, log, db, redisClient, wsHub)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.Server.Port,

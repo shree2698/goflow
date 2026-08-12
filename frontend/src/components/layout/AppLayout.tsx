@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/Header";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/register" || pathname === "/password-reset";
+  const isAuthPage = pathname === "/" || pathname === "/login" || pathname === "/register" || pathname === "/password-reset";
 
   if (isAuthPage) {
     return <main className="flex-1 overflow-auto">{children}</main>;

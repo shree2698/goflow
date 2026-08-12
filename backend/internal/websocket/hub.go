@@ -3,7 +3,6 @@ package websocket
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"sync"
 	"time"
 

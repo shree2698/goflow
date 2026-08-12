@@ -3,7 +3,7 @@ package eventbus
 import (
 	"context"
 	"sync"
-	"goflow/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/domain"
 )
 
 type EventBus interface {

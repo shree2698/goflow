@@ -31,19 +31,19 @@ func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req domain.CreateWorkflowInput
+	var req domain.Workflow
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, domain.NewBadRequest("Invalid request payload"))
 		return
 	}
+	req.CreatorID = creatorID
 
-	wf, err := h.workflowService.Create(r.Context(), creatorID, &req)
-	if err != nil {
+	if err := h.workflowService.CreateWorkflow(r.Context(), &req); err != nil {
 		response.Error(w, err)
 		return
 	}
 
-	response.Created(w, wf)
+	response.Created(w, req)
 }
 
 func (h *WorkflowHandler) ListByProject(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +54,7 @@ func (h *WorkflowHandler) ListByProject(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	workflows, err := h.workflowService.ListByProject(r.Context(), projectID)
+	workflows, err := h.workflowService.ListWorkflows(r.Context(), projectID)
 	if err != nil {
 		response.Error(w, err)
 		return
@@ -71,8 +71,14 @@ func (h *WorkflowHandler) ToggleActive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wf, err := h.workflowService.ToggleActive(r.Context(), workflowID)
+	wf, err := h.workflowService.GetWorkflow(r.Context(), workflowID)
 	if err != nil {
+		response.Error(w, err)
+		return
+	}
+	wf.IsActive = !wf.IsActive
+
+	if err := h.workflowService.UpdateWorkflow(r.Context(), wf); err != nil {
 		response.Error(w, err)
 		return
 	}
@@ -88,7 +94,7 @@ func (h *WorkflowHandler) ListExecutions(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	executions, err := h.workflowService.ListExecutions(r.Context(), workflowID)
+	executions, err := h.workflowService.ListWorkflowExecutions(r.Context(), workflowID)
 	if err != nil {
 		response.Error(w, err)
 		return

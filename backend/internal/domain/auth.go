@@ -3,8 +3,6 @@ package domain
 import (
 	"context"
 	"errors"
-
-	"github.com/google/uuid"
 )
 
 var (
