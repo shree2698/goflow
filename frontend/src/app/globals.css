@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+.dark {
   --canvas: 350 25% 5%;
   --card: 350 20% 9%;
   --hover: 350 18% 15%;
