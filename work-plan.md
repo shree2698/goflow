@@ -13,11 +13,11 @@
 ```text
 Project: GoFlow
 
-Overall Progress: 40%
+Overall Progress: 47%
 
-Completed Phases: 6 / 15
+Completed Phases: 7 / 15
 
-Current Phase: Phase 6 — Background Jobs & Workers
+Current Phase: Phase 7 — Notifications
 
 Backend Progress:  100%
 Frontend Progress: 100%
@@ -31,7 +31,7 @@ Current Status: In Progress
 
 ```text
 Current Phase:
-Phase 6 — Background Jobs & Workers
+Phase 7 — Notifications
 
 Status:
 Not Started
@@ -40,7 +40,8 @@ Phase Progress:
 0%
 
 Next Task:
-BE-059 — Job model & types
+DB-007 — Notifications migration
+FE-041 — Notification bell icon
 
 Blocked Tasks:
 None
@@ -1227,7 +1228,7 @@ Completed    — Fully implemented, tested, acceptance criteria met
 | 3 | Authentication | 100% | 100% | 100% | Completed |
 | 4 | Projects & Tasks | 100% | 100% | 100% | Completed |
 | 5 | Workflow Engine | 100% | 100% | 100% | Completed |
-| 6 | Background Jobs & Workers | 0% | — | 0% | Not Started |
+| 6 | Background Jobs & Workers | 100% | — | 100% | Completed |
 | 7 | Notifications | 0% | 0% | 0% | Not Started |
 | 8 | Real-Time Features | 0% | 0% | 0% | Not Started |
 | 9 | Dashboard & Analytics | 0% | 0% | 0% | Not Started |
@@ -1522,6 +1523,7 @@ The following **MUST remain sequential**:
 | Phase 3 | 2026-08-12 | 100% | 100% | PASS | Completed | Full Authentication system complete (User migration, JWT, Bcrypt, Register/Login/Logout handlers, ProtectedRoutes, Auth UI) |
 | Phase 4 | 2026-08-12 | 100% | 100% | PASS | Completed | Projects & Tasks complete (Database migrations, RBAC middleware, Project/Task APIs, Kanban Board UI, Subtasks & Comments) |
 | Phase 5 | 2026-08-12 | 100% | 100% | PASS | Completed | Workflow Engine complete (DB migrations, In-memory event bus, Evaluator logic, Action executor, Engine coordinator, 3-Step Builder UI, Execution log) |
+| Phase 6 | 2026-08-12 | 100% | — | PASS | Completed | Background Workers complete (Job models, Redis Queue producer/consumer, Worker pool entrypoint, Retry with exponential backoff, DLQ, Scheduled reminders handler, Workflow background worker handler) |
 
 ---
 
