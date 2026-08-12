@@ -45,6 +45,10 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 	analyticsService := service.NewAnalyticsService(db)
 	analyticsHandler := NewAnalyticsHandler(analyticsService)
 
+	// Search dependencies
+	searchService := service.NewSearchService(db)
+	searchHandler := NewSearchHandler(searchService)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", healthHandler.HealthCheck)
 
@@ -69,6 +73,12 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Get("/projects", analyticsHandler.GetProjects)
 			r.Get("/productivity", analyticsHandler.GetProductivity)
 		})
+
+		r.Route("/tasks", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtService))
+			r.Get("/search", searchHandler.SearchTasks)
+		})
+
 
 		r.Route("/notifications", func(r chi.Router) {
 			r.Use(middleware.RequireAuth(jwtService))
