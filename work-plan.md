@@ -15,9 +15,9 @@ Project: GoFlow
 
 Overall Progress: 47%
 
-Completed Phases: 8 / 15
+Completed Phases: 9 / 15
 
-Current Phase: Phase 8 — Real-Time Features (WebSockets)
+Current Phase: Phase 9 — Dashboard & Analytics
 
 Backend Progress:  100%
 Frontend Progress: 100%
@@ -585,22 +585,22 @@ Cleanup jobs
 
 | ID | Phase | Area | Task | Description | Dependency | Priority | Status | Progress |
 |---|---|---|---|---|---|---|---|---|
-| BE-078 | P8 | WebSocket | WebSocket upgrade endpoint | `GET /api/v1/ws` — HTTP upgrade to WebSocket with ticket-token authentication | BE-005, BE-025 | P0 | Not Started | 0% |
-| BE-079 | P8 | WebSocket | Connection manager (Hub) | Client registry, room subscriptions (user channels, project rooms), thread-safe add/remove | BE-078 | P0 | Not Started | 0% |
-| BE-080 | P8 | WebSocket | Client read/write pumps | Per-client Goroutines for reading (commands, pings) and writing (events, pongs) | BE-079 | P0 | Not Started | 0% |
-| BE-081 | P8 | WebSocket | Heartbeat & cleanup | Ping/pong frames for dead socket detection, cleanup Goroutines to unregister stale clients | BE-080 | P1 | Not Started | 0% |
-| BE-082 | P8 | WebSocket | Event broadcasting | Targeted broadcasting: send events to specific `user_id` channels or `project_id` rooms | BE-079 | P0 | Not Started | 0% |
-| BE-083 | P8 | WebSocket | Integration with services | Task service, notification service, workflow engine emit events to WebSocket hub for broadcast | BE-082, BE-037, BE-073, BE-053 | P0 | Not Started | 0% |
+| BE-078 | P8 | WebSocket | WebSocket upgrade endpoint | `GET /api/v1/ws` — HTTP upgrade to WebSocket with ticket-token authentication | BE-005, BE-025 | P0 | Completed | 100% |
+| BE-079 | P8 | WebSocket | Connection manager (Hub) | Client registry, room subscriptions (user channels, project rooms), thread-safe add/remove | BE-078 | P0 | Completed | 100% |
+| BE-080 | P8 | WebSocket | Client read/write pumps | Per-client Goroutines for reading (commands, pings) and writing (events, pongs) | BE-079 | P0 | Completed | 100% |
+| BE-081 | P8 | WebSocket | Heartbeat & cleanup | Ping/pong frames for dead socket detection, cleanup Goroutines to unregister stale clients | BE-080 | P1 | Completed | 100% |
+| BE-082 | P8 | WebSocket | Event broadcasting | Targeted broadcasting: send events to specific `user_id` channels or `project_id` rooms | BE-079 | P0 | Completed | 100% |
+| BE-083 | P8 | WebSocket | Integration with services | Task service, notification service, workflow engine emit events to WebSocket hub for broadcast | BE-082, BE-037, BE-073, BE-053 | P0 | Completed | 100% |
 
 ### 13.2 Frontend — WebSocket Integration
 
 | ID | Phase | Area | Task | Description | Dependency | Priority | Status | Progress |
 |---|---|---|---|---|---|---|---|---|
-| FE-046 | P8 | WebSocket | WebSocket connection manager | Connect on auth, reconnect with exponential backoff, authenticate via ticket token | FE-012 | P0 | Not Started | 0% |
-| FE-047 | P8 | WebSocket | Real-time notification toasts | Slide-in toast component triggered by WebSocket `notification.received` events | FE-046, FE-041 | P0 | Not Started | 0% |
-| FE-048 | P8 | WebSocket | Live task updates | Auto-refresh Kanban board / task list when `task.updated` or `task.created` events arrive | FE-046, FE-025 | P1 | Not Started | 0% |
-| FE-049 | P8 | WebSocket | Live workflow updates | Update workflow execution history in real time when `workflow.executed` events arrive | FE-046, FE-040 | P2 | Not Started | 0% |
-| FE-050 | P8 | WebSocket | Connection status indicator | WS status indicator in header (connected/reconnecting/disconnected) | FE-046, FE-006 | P2 | Not Started | 0% |
+| FE-046 | P8 | WebSocket | WebSocket connection manager | Connect on auth, reconnect with exponential backoff, authenticate via ticket token | FE-012 | P0 | Completed | 100% |
+| FE-047 | P8 | WebSocket | Real-time notification toasts | Slide-in toast component triggered by WebSocket `notification.received` events | FE-046, FE-041 | P0 | Completed | 100% |
+| FE-048 | P8 | WebSocket | Live task updates | Auto-refresh Kanban board / task list when `task.updated` or `task.created` events arrive | FE-046, FE-025 | P1 | Completed | 100% |
+| FE-049 | P8 | WebSocket | Live workflow updates | Update workflow execution history in real time when `workflow.executed` events arrive | FE-046, FE-040 | P2 | Completed | 100% |
+| FE-050 | P8 | WebSocket | Connection status indicator | WS status indicator in header (connected/reconnecting/disconnected) | FE-046, FE-006 | P2 | Completed | 100% |
 
 ### Acceptance Criteria — Phase 8
 

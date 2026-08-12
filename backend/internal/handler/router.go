@@ -11,10 +11,12 @@ import (
 	"github.com/shree2698/goflow/backend/internal/handler/middleware"
 	"github.com/shree2698/goflow/backend/internal/repository"
 	"github.com/shree2698/goflow/backend/internal/service"
+	"github.com/shree2698/goflow/backend/internal/websocket"
 	"github.com/shree2698/goflow/backend/pkg/jwt"
 )
 
-func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisClient *redis.Client) *chi.Mux {
+func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisClient *redis.Client, wsHub *websocket.Hub) *chi.Mux {
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -63,7 +65,14 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Patch("/read-all", notifHandler.MarkAllAsRead)
 			r.Patch("/{id}/read", notifHandler.MarkAsRead)
 		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtService))
+			wsHandler := websocket.NewHandler(wsHub)
+			r.Get("/ws", wsHandler.ServeWS)
+		})
 	})
+
 
 
 	return r
