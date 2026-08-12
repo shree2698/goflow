@@ -37,8 +37,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"user":   user,
-		"tokens": tokens,
+		"success": true,
+		"data": map[string]interface{}{
+			"user":   user,
+			"tokens": tokens,
+		},
 	})
 }
 
@@ -62,8 +65,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"user":   user,
-		"tokens": tokens,
+		"success": true,
+		"data": map[string]interface{}{
+			"user":   user,
+			"tokens": tokens,
+		},
 	})
 }
 
