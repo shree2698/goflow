@@ -1,7 +1,6 @@
 package eventbus
 
 import (
-	"context"
 	"sync"
 	"github.com/shree2698/goflow/backend/internal/domain"
 )

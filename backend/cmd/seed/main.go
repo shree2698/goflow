@@ -117,5 +117,5 @@ func main() {
 	fmt.Println("------------------------------------------")
 	fmt.Println("Email:    employee2@goflow.com")
 	fmt.Println("Password: Password123!")
-	fmt.Println("==========================================\n")
+	fmt.Println("==========================================")
 }
