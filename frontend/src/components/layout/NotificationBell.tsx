@@ -44,20 +44,26 @@ export const NotificationBell: React.FC = () => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-md hover:bg-hover text-foreground-secondary hover:text-foreground transition-colors"
+        className="relative p-2 rounded-lg hover:bg-hover text-foreground-secondary hover:text-foreground transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
         aria-label="Notifications"
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+          <span className="absolute top-1 right-1 w-4 h-4 bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow">
             {unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border border-border rounded-lg shadow-xl z-50 overflow-hidden">
-          <div className="p-3 border-b border-border flex items-center justify-between bg-canvas">
+        <>
+          {/* Backdrop for mobile dismiss */}
+          <div 
+            className="fixed inset-0 z-40 sm:hidden" 
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="fixed sm:absolute right-3 sm:right-0 top-16 sm:top-auto sm:mt-2 w-[calc(100vw-1.5rem)] sm:w-80 md:w-96 max-w-sm bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div className="p-3 border-b border-border flex items-center justify-between bg-canvas">
             <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
             {unreadCount > 0 && (
               <button
@@ -109,6 +115,7 @@ export const NotificationBell: React.FC = () => {
             )}
           </div>
         </div>
+        </>
       )}
     </div>
   );

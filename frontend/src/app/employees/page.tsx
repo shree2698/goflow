@@ -112,116 +112,137 @@ export default function EmployeesPage() {
 
   return (
     <ProtectedRoute>
-      <div className="p-6 space-y-6 max-w-7xl mx-auto">
-        <div className="flex justify-between items-center">
+      <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Employee Control Panel</h1>
-            <p className="text-sm text-foreground-secondary mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Employee Control Panel</h1>
+            <p className="text-xs sm:text-sm text-foreground-secondary mt-1">
               Manage employee accounts, assign roles, reset passwords, and control login access.
             </p>
           </div>
           <button
             onClick={openCreateModal}
-            className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm font-medium transition-colors min-h-[44px] shrink-0 self-start sm:self-auto w-full sm:w-auto shadow-sm"
           >
             <UserPlus size={16} />
-            Add Employee
+            <span>Add Employee</span>
           </button>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+          <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
             {error}
           </div>
         )}
 
         {successMsg && (
-          <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm flex items-center gap-2">
-            <CheckCircle size={16} />
-            {successMsg}
+          <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-sm flex items-center gap-2">
+            <CheckCircle size={16} className="shrink-0" />
+            <span>{successMsg}</span>
           </div>
         )}
 
         {loading ? (
           <div className="py-12 text-center text-foreground-secondary">Loading employees...</div>
         ) : (
-          <div className="border border-border rounded-xl bg-card overflow-hidden">
-            <table className="w-full text-left text-sm text-foreground">
-              <thead className="bg-canvas border-b border-border text-xs text-foreground-secondary uppercase">
-                <tr>
-                  <th className="px-6 py-3.5 font-semibold">Employee</th>
-                  <th className="px-6 py-3.5 font-semibold">Email</th>
-                  <th className="px-6 py-3.5 font-semibold">Role</th>
-                  <th className="px-6 py-3.5 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {employees.map((emp) => (
-                  <tr key={emp.id} className="hover:bg-hover transition-colors">
-                    <td className="px-6 py-4 font-medium flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-bold">
-                        {emp.full_name ? emp.full_name[0] : "E"}
-                      </div>
-                      <span>{emp.full_name}</span>
-                    </td>
-                    <td className="px-6 py-4 text-foreground-secondary">{emp.email}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          emp.role === "admin"
-                            ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
-                            : "bg-blue-500/10 border-blue-500/30 text-blue-400"
-                        }`}
-                      >
-                        {emp.role === "admin" ? <Shield size={12} /> : <User size={12} />}
-                        {emp.role || "employee"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button
-                        onClick={() => openEditModal(emp)}
-                        className="p-1.5 rounded-lg border border-border hover:bg-canvas text-foreground-secondary hover:text-foreground transition-colors"
-                        title="Edit / Reset Access"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(emp.id)}
-                        className="p-1.5 rounded-lg border border-border hover:bg-canvas text-red-400 hover:text-red-300 transition-colors"
-                        title="Delete Access"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
+          <div className="border border-border rounded-xl bg-card overflow-hidden shadow-sm">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left text-sm text-foreground min-w-[540px]">
+                <thead className="bg-canvas border-b border-border text-xs text-foreground-secondary uppercase tracking-wider">
+                  <tr>
+                    <th className="px-4 sm:px-6 py-3.5 font-semibold">Employee</th>
+                    <th className="px-4 sm:px-6 py-3.5 font-semibold">Email</th>
+                    <th className="px-4 sm:px-6 py-3.5 font-semibold">Role</th>
+                    <th className="px-4 sm:px-6 py-3.5 font-semibold text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {employees.map((emp) => (
+                    <tr key={emp.id} className="hover:bg-hover transition-colors">
+                      <td className="px-4 sm:px-6 py-3.5 sm:py-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent font-bold text-xs shrink-0">
+                            {emp.full_name ? emp.full_name[0] : "E"}
+                          </div>
+                          <span className="truncate max-w-[160px] sm:max-w-xs">{emp.full_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3.5 sm:py-4 text-foreground-secondary text-xs sm:text-sm">{emp.email}</td>
+                      <td className="px-4 sm:px-6 py-3.5 sm:py-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                            emp.role === "admin"
+                              ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
+                              : "bg-blue-500/10 border-blue-500/30 text-blue-400"
+                          }`}
+                        >
+                          {emp.role === "admin" ? <Shield size={12} /> : <User size={12} />}
+                          {emp.role || "employee"}
+                        </span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3.5 sm:py-4 text-right">
+                        <div className="flex items-center justify-end gap-1 sm:gap-2">
+                          <button
+                            onClick={() => openEditModal(emp)}
+                            className="p-2 rounded-lg border border-border hover:bg-canvas text-foreground-secondary hover:text-foreground transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Edit / Reset Access"
+                            aria-label="Edit Employee"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(emp.id)}
+                            className="p-2 rounded-lg border border-border hover:bg-canvas text-red-400 hover:text-red-300 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Delete Access"
+                            aria-label="Delete Employee"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {employees.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-8 text-center text-foreground-secondary text-sm">
+                        No employees found. Click "Add Employee" to create one.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
         {/* Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-card border border-border rounded-xl p-6 shadow-2xl relative space-y-5">
+          <div 
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsModalOpen(false);
+            }}
+          >
+            <div className="w-full max-w-md bg-card border border-border rounded-xl p-4 sm:p-6 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto my-auto">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-foreground-secondary hover:text-foreground transition-colors"
+                className="absolute top-4 right-4 text-foreground-secondary hover:text-foreground transition-colors p-1.5 rounded-lg hover:bg-hover min-w-[36px] min-h-[36px] flex items-center justify-center"
+                aria-label="Close modal"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
 
-              <h2 className="text-xl font-bold text-foreground">
+              <h2 className="text-lg sm:text-xl font-bold text-foreground pr-8">
                 {editingEmployee ? "Edit Employee Credentials" : "Add New Employee"}
               </h2>
 
               <form onSubmit={handleSubmit} className="space-y-4 text-sm">
                 <div>
-                  <label className="block text-foreground-secondary mb-1">Full Name</label>
+                  <label className="block text-foreground-secondary mb-1 text-xs sm:text-sm font-medium">Full Name</label>
                   <input
                     type="text"
                     required
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors min-h-[42px]"
                     placeholder="Jane Doe"
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
@@ -229,11 +250,11 @@ export default function EmployeesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-foreground-secondary mb-1">Email Address</label>
+                  <label className="block text-foreground-secondary mb-1 text-xs sm:text-sm font-medium">Email Address</label>
                   <input
                     type="email"
                     required
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors min-h-[42px]"
                     placeholder="jane@goflow.com"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -241,14 +262,14 @@ export default function EmployeesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-foreground-secondary mb-1">
-                    Password {editingEmployee && <span className="text-foreground-secondary text-xs">(Leave blank to keep current)</span>}
+                  <label className="block text-foreground-secondary mb-1 text-xs sm:text-sm font-medium">
+                    Password {editingEmployee && <span className="text-foreground-secondary text-xs font-normal">(Leave blank to keep current)</span>}
                   </label>
                   <input
                     type="password"
                     required={!editingEmployee}
                     minLength={6}
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors min-h-[42px]"
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -256,9 +277,9 @@ export default function EmployeesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-foreground-secondary mb-1">Role / Access Level</label>
+                  <label className="block text-foreground-secondary mb-1 text-xs sm:text-sm font-medium">Role / Access Level</label>
                   <select
-                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-canvas border border-border rounded-lg text-foreground focus:outline-none focus:border-accent transition-colors min-h-[42px]"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   >
@@ -267,17 +288,17 @@ export default function EmployeesPage() {
                   </select>
                 </div>
 
-                <div className="pt-3 flex justify-end gap-3">
+                <div className="pt-2 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 border border-border rounded-lg text-foreground-secondary hover:text-foreground hover:bg-hover transition-colors"
+                    className="w-full sm:w-auto px-4 py-2.5 border border-border rounded-lg text-foreground-secondary hover:text-foreground hover:bg-hover transition-colors min-h-[42px]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium rounded-lg transition-colors min-h-[42px]"
                   >
                     {editingEmployee ? "Update Employee" : "Create Employee"}
                   </button>

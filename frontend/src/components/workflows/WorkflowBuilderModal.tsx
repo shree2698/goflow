@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { X, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface WorkflowBuilderModalProps {
   onClose: () => void;
@@ -35,43 +36,69 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1b1315] border border-[#40262b] rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-[#40262b] flex justify-between items-center">
-          <h2 className="text-xl font-bold">Create Workflow Rule</h2>
-          <button onClick={onClose} className="text-foreground-secondary hover:text-white">&times;</button>
+    <div 
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh] my-auto">
+        <div className="p-4 sm:p-6 border-b border-border flex justify-between items-center bg-canvas rounded-t-xl">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-foreground">Create Workflow Rule</h2>
+            <p className="text-xs text-foreground-secondary mt-0.5">Configure event-driven automation in 3 steps</p>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="text-foreground-secondary hover:text-foreground p-1.5 rounded-lg hover:bg-hover min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
+            aria-label="Close modal"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6">
           {/* Progress Indicator */}
-          <div className="flex gap-2 mb-8">
-            {[1, 2, 3].map(s => (
-              <div key={s} className={`h-2 flex-1 rounded-full ${step >= s ? 'bg-[#e6193c]' : 'bg-[#40262b]'}`} />
-            ))}
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs font-semibold text-foreground-secondary">
+              <span className={step >= 1 ? "text-accent" : ""}>1. Trigger</span>
+              <span className={step >= 2 ? "text-accent" : ""}>2. Conditions</span>
+              <span className={step >= 3 ? "text-accent" : ""}>3. Action</span>
+            </div>
+            <div className="flex gap-2">
+              {[1, 2, 3].map(s => (
+                <div key={s} className={`h-2 flex-1 rounded-full transition-colors ${step >= s ? 'bg-accent' : 'bg-hover'}`} />
+              ))}
+            </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2 text-foreground-secondary">Rule Name</label>
+          <div>
+            <label className="block text-xs sm:text-sm font-medium mb-1.5 text-foreground-secondary">Rule Name</label>
             <input 
               type="text" 
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., High Priority Notification" 
-              className="w-full bg-[#0e090a] border border-[#40262b] rounded-md px-4 py-2 focus:outline-none focus:border-[#e6193c]"
+              placeholder="e.g., High Priority Escalation" 
+              className="w-full bg-canvas border border-border rounded-lg px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:border-accent min-h-[42px] transition-colors"
             />
           </div>
 
           {step === 1 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <h3 className="text-lg font-semibold mb-4">Step 1: Select Trigger</h3>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <h3 className="text-sm sm:text-base font-semibold text-foreground">Select Trigger Event</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {TRIGGERS.map(t => (
                   <button
                     key={t.id}
                     onClick={() => setTrigger(t.id)}
-                    className={`p-4 rounded-lg border text-left transition-colors ${trigger === t.id ? 'border-[#e6193c] bg-[#e6193c]/10' : 'border-[#40262b] bg-[#0e090a] hover:border-foreground-secondary'}`}
+                    className={`p-3.5 rounded-xl border text-left transition-all min-h-[48px] flex items-center justify-between ${
+                      trigger === t.id 
+                        ? 'border-accent bg-accent/10 text-accent font-semibold' 
+                        : 'border-border bg-canvas/40 hover:bg-hover text-foreground'
+                    }`}
                   >
-                    <div className="font-medium">{t.label}</div>
+                    <span className="text-xs sm:text-sm">{t.label}</span>
+                    {trigger === t.id && <CheckCircle size={16} className="shrink-0 ml-2" />}
                   </button>
                 ))}
               </div>
@@ -79,11 +106,11 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
           )}
 
           {step === 2 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <h3 className="text-lg font-semibold mb-4">Step 2: Define Conditions</h3>
-              <div className="space-y-4">
+            <div className="space-y-3">
+              <h3 className="text-sm sm:text-base font-semibold text-foreground">Define Rule Conditions</h3>
+              <div className="space-y-3">
                 {conditions.map((cond, index) => (
-                  <div key={index} className="flex flex-wrap gap-2 items-center bg-[#0e090a] p-3 rounded-lg border border-[#40262b]">
+                  <div key={index} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center bg-canvas/50 p-3 rounded-xl border border-border">
                     {index > 0 && (
                       <select 
                         value={cond.logic}
@@ -92,13 +119,13 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
                           newC[index].logic = e.target.value;
                           setConditions(newC);
                         }}
-                        className="bg-[#1b1315] border border-[#40262b] rounded px-2 py-1 text-sm"
+                        className="bg-card border border-border rounded-lg px-2.5 py-2 text-xs font-semibold min-h-[38px] text-foreground"
                       >
                         <option value="AND">AND</option>
                         <option value="OR">OR</option>
                       </select>
                     )}
-                    <span className="text-sm font-medium ml-2 text-foreground-secondary">IF</span>
+                    <span className="text-xs font-bold text-accent sm:ml-1 self-center sm:self-auto">IF</span>
                     <select 
                       value={cond.field}
                       onChange={(e) => {
@@ -106,7 +133,7 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
                         newC[index].field = e.target.value;
                         setConditions(newC);
                       }}
-                      className="bg-[#1b1315] border border-[#40262b] rounded px-3 py-1"
+                      className="bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm min-h-[38px] text-foreground flex-1"
                     >
                       {FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
@@ -117,7 +144,7 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
                         newC[index].comparator = e.target.value;
                         setConditions(newC);
                       }}
-                      className="bg-[#1b1315] border border-[#40262b] rounded px-3 py-1"
+                      className="bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm min-h-[38px] text-foreground flex-1"
                     >
                       {COMPARATORS.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
@@ -130,19 +157,22 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
                         setConditions(newC);
                       }}
                       placeholder="Value..." 
-                      className="flex-1 min-w-[100px] bg-[#1b1315] border border-[#40262b] rounded px-3 py-1 focus:outline-none focus:border-[#e6193c]"
+                      className="bg-card border border-border rounded-lg px-3 py-2 text-xs sm:text-sm text-foreground focus:outline-none focus:border-accent min-h-[38px] flex-1"
                     />
                     {conditions.length > 1 && (
                       <button 
                         onClick={() => setConditions(conditions.filter((_, i) => i !== index))}
-                        className="text-red-400 hover:text-red-300 ml-2"
-                      >&times;</button>
+                        className="text-red-400 hover:text-red-300 p-1.5 rounded-lg hover:bg-hover self-end sm:self-center min-w-[36px] min-h-[36px] flex items-center justify-center"
+                        aria-label="Remove condition"
+                      >
+                        <X size={16} />
+                      </button>
                     )}
                   </div>
                 ))}
                 <button 
                   onClick={() => setConditions([...conditions, { field: FIELDS[0], comparator: COMPARATORS[0], value: '', logic: 'AND' }])}
-                  className="text-sm text-[#e6193c] hover:text-[#c91634] font-medium"
+                  className="text-xs sm:text-sm text-accent hover:underline font-semibold flex items-center gap-1.5 py-1"
                 >
                   + Add Condition
                 </button>
@@ -151,16 +181,21 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
           )}
 
           {step === 3 && (
-            <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-              <h3 className="text-lg font-semibold mb-4">Step 3: Choose Action</h3>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <h3 className="text-sm sm:text-base font-semibold text-foreground">Choose Action</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                 {ACTIONS.map(a => (
                   <button
                     key={a.id}
                     onClick={() => setAction(a.id)}
-                    className={`p-4 rounded-lg border text-left transition-colors ${action === a.id ? 'border-[#e6193c] bg-[#e6193c]/10' : 'border-[#40262b] bg-[#0e090a] hover:border-foreground-secondary'}`}
+                    className={`p-3.5 rounded-xl border text-left transition-all min-h-[48px] flex items-center justify-between ${
+                      action === a.id 
+                        ? 'border-accent bg-accent/10 text-accent font-semibold' 
+                        : 'border-border bg-canvas/40 hover:bg-hover text-foreground'
+                    }`}
                   >
-                    <div className="font-medium">{a.label}</div>
+                    <span className="text-xs sm:text-sm">{a.label}</span>
+                    {action === a.id && <CheckCircle size={16} className="shrink-0 ml-2" />}
                   </button>
                 ))}
               </div>
@@ -168,29 +203,31 @@ export default function WorkflowBuilderModal({ onClose, onSave }: WorkflowBuilde
           )}
         </div>
 
-        <div className="p-6 border-t border-[#40262b] flex justify-between bg-[#1b1315] rounded-b-xl">
+        <div className="p-4 sm:p-6 border-t border-border flex justify-between items-center bg-canvas rounded-b-xl gap-3">
           {step > 1 ? (
             <button 
               onClick={() => setStep(s => s - 1)}
-              className="px-4 py-2 border border-[#40262b] rounded-md hover:bg-[#0e090a] transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2.5 border border-border rounded-lg hover:bg-hover text-foreground-secondary hover:text-foreground text-xs sm:text-sm font-medium transition-colors min-h-[42px]"
             >
-              Back
+              <ArrowLeft size={16} />
+              <span>Back</span>
             </button>
-          ) : <div></div>}
+          ) : <div />}
           
           {step < 3 ? (
             <button 
               onClick={() => setStep(s => s + 1)}
-              className="px-4 py-2 bg-[#e6193c] hover:bg-[#c91634] text-white rounded-md transition-colors"
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-lg text-xs sm:text-sm font-medium transition-colors min-h-[42px] shadow-sm ml-auto"
             >
-              Next
+              <span>Next</span>
+              <ArrowRight size={16} />
             </button>
           ) : (
             <button 
               onClick={handleSave}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors min-h-[42px] shadow-sm ml-auto"
             >
-              Save Rule
+              Save Workflow Rule
             </button>
           )}
         </div>
