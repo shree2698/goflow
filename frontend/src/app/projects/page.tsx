@@ -7,12 +7,12 @@ import { Plus, FolderKanban } from "lucide-react";
 export default function ProjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projects] = useState([
-    { id: '1', name: 'Frontend Refactor', description: 'Update the frontend to Next.js 14 and Tailwind' },
-    { id: '2', name: 'Backend API', description: 'Build new REST endpoints and Redis worker pool' }
+    { id: '1', name: 'Frontend Refactor', description: 'Update the frontend to Next.js 14, App Router, and Tailwind CSS' },
+    { id: '2', name: 'Backend API', description: 'Build new REST endpoints, PostgreSQL migrations, and Redis worker pool' }
   ]);
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto w-full">
+    <div className="space-y-6 max-w-7xl mx-auto w-full">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Projects</h1>
@@ -22,31 +22,31 @@ export default function ProjectsPage() {
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 bg-accent text-white px-4 py-2.5 rounded-lg hover:bg-accent-hover transition-colors text-sm font-medium min-h-[44px] shrink-0 self-start sm:self-auto w-full sm:w-auto shadow-sm"
+          className="flex items-center justify-center gap-2 bg-gradient-to-r from-accent to-lavender text-white px-5 py-2.5 rounded-xl shadow-neu-btn hover:opacity-95 active:shadow-neu-btn-active transition-all text-sm font-semibold min-h-[44px] shrink-0 self-start sm:self-auto w-full sm:w-auto"
         >
-          <Plus size={16} />
+          <Plus size={18} />
           <span>Create Project</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {projects.map(p => (
           <Link key={p.id} href={`/projects/${p.id}`} className="block group">
-            <div className="bg-card p-5 sm:p-6 rounded-xl border border-border group-hover:border-accent transition-colors shadow-sm h-full flex flex-col justify-between">
+            <div className="bg-canvas p-6 rounded-2xl shadow-neu-flat group-hover:shadow-neu-flat-lg transition-all duration-300 h-full flex flex-col justify-between border border-white/50">
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-lg bg-accent/10 text-accent">
-                    <FolderKanban size={20} />
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-xl shadow-neu-flat-sm bg-canvas text-accent group-hover:text-lavender transition-colors">
+                    <FolderKanban size={22} />
                   </div>
-                  <h2 className="text-base sm:text-lg font-semibold text-foreground group-hover:text-accent transition-colors truncate">
+                  <h2 className="text-base sm:text-lg font-bold text-foreground group-hover:text-accent transition-colors truncate">
                     {p.name}
                   </h2>
                 </div>
-                <p className="text-xs sm:text-sm text-foreground-secondary line-clamp-2">{p.description}</p>
+                <p className="text-xs sm:text-sm text-foreground-secondary line-clamp-3 leading-relaxed">{p.description}</p>
               </div>
-              <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-foreground-secondary">
-                <span>Active Kanban</span>
-                <span className="text-accent font-medium group-hover:underline">Open Board →</span>
+              <div className="mt-5 pt-4 border-t border-border/50 flex items-center justify-between text-xs text-foreground-secondary">
+                <span className="font-medium text-foreground-secondary">Active Kanban</span>
+                <span className="text-accent font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1">Open Board →</span>
               </div>
             </div>
           </Link>

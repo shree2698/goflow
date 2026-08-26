@@ -35,29 +35,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas flex items-center justify-center p-3 sm:p-6 w-full">
-      <div className="max-w-md w-full bg-card rounded-2xl p-5 sm:p-8 border border-border shadow-2xl my-auto">
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="w-12 h-12 rounded-xl bg-accent flex items-center justify-center text-white font-black text-2xl mx-auto mb-3 shadow-lg shadow-accent/20">
+    <div className="min-h-screen bg-canvas flex items-center justify-center p-4 sm:p-6 w-full">
+      <div className="max-w-md w-full bg-canvas rounded-3xl p-6 sm:p-10 shadow-neu-flat border border-white/70 my-auto">
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-lavender flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-neu-btn">
             G
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">Welcome Back</h1>
-          <p className="text-xs sm:text-sm text-foreground-secondary mt-1">Log in to your GoFlow account</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">Welcome Back</h1>
+          <p className="text-xs sm:text-sm text-foreground-secondary mt-1 font-medium">Log in to your GoFlow account</p>
         </div>
 
         {error && (
-          <div className="mb-5 p-3.5 bg-accent/10 border border-accent/40 rounded-xl text-accent text-xs sm:text-sm">
+          <div className="mb-6 p-4 bg-canvas shadow-neu-pressed rounded-2xl text-pink text-xs sm:text-sm font-semibold border border-pink/30">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-foreground-secondary mb-1.5">Email Address</label>
+            <label className="block text-xs sm:text-sm font-semibold text-foreground-secondary mb-1.5">Email Address</label>
             <input
               type="email"
               required
-              className="w-full px-3.5 py-2.5 sm:py-3 bg-canvas border border-border rounded-xl text-foreground focus:outline-none focus:border-accent text-sm min-h-[44px] transition-colors"
+              className="w-full px-4 py-3 bg-canvas shadow-neu-pressed rounded-2xl text-foreground focus:outline-none text-sm min-h-[46px] transition-all"
               placeholder="you@example.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -66,15 +66,15 @@ export default function LoginPage() {
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-xs sm:text-sm font-medium text-foreground-secondary">Password</label>
-              <Link href="/password-reset" className="text-xs text-accent hover:underline">
+              <label className="block text-xs sm:text-sm font-semibold text-foreground-secondary">Password</label>
+              <Link href="/password-reset" className="text-xs text-lavender hover:underline font-semibold">
                 Forgot password?
               </Link>
             </div>
             <input
               type="password"
               required
-              className="w-full px-3.5 py-2.5 sm:py-3 bg-canvas border border-border rounded-xl text-foreground focus:outline-none focus:border-accent text-sm min-h-[44px] transition-colors"
+              className="w-full px-4 py-3 bg-canvas shadow-neu-pressed rounded-2xl text-foreground focus:outline-none text-sm min-h-[46px] transition-all"
               placeholder="••••••••"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -84,22 +84,22 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 bg-accent hover:bg-accent-hover text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] flex items-center justify-center gap-2 shadow-sm text-sm"
+            className="w-full py-3.5 px-4 bg-gradient-to-r from-accent to-lavender hover:opacity-95 text-white font-bold rounded-2xl shadow-neu-btn active:shadow-neu-btn-active transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[46px] flex items-center justify-center gap-2 text-sm"
           >
             {loading ? (
               <span>Logging in...</span>
             ) : (
               <>
-                <LogIn size={16} />
+                <LogIn size={18} />
                 <span>Log In</span>
               </>
             )}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-foreground-secondary text-xs sm:text-sm">
+        <p className="mt-8 text-center text-foreground-secondary text-xs sm:text-sm font-medium">
           Don't have an account?{" "}
-          <Link href="/register" className="text-accent font-semibold hover:underline">
+          <Link href="/register" className="text-accent font-bold hover:underline">
             Sign up
           </Link>
         </p>
