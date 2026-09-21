@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/shree2698/goflow/backend/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/handler/middleware"
 	"github.com/shree2698/goflow/backend/internal/service"
 	"github.com/shree2698/goflow/backend/pkg/response"
 )
@@ -20,13 +21,19 @@ func NewWorkflowHandler(ws service.WorkflowService) *WorkflowHandler {
 }
 
 func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
-	userIDStr, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		response.Error(w, domain.ErrUnauthorized)
-		return
-	}
-	creatorID, err := uuid.Parse(userIDStr)
-	if err != nil {
+	userIDVal := r.Context().Value(middleware.UserIDKey)
+	var creatorID uuid.UUID
+	switch v := userIDVal.(type) {
+	case uuid.UUID:
+		creatorID = v
+	case string:
+		var err error
+		creatorID, err = uuid.Parse(v)
+		if err != nil {
+			response.Error(w, domain.ErrUnauthorized)
+			return
+		}
+	default:
 		response.Error(w, domain.ErrUnauthorized)
 		return
 	}

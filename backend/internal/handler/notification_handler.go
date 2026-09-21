@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/shree2698/goflow/backend/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/handler/middleware"
 	"github.com/shree2698/goflow/backend/internal/service"
 	"github.com/shree2698/goflow/backend/pkg/response"
 )
@@ -20,13 +21,20 @@ func NewNotificationHandler(ns service.NotificationService) *NotificationHandler
 	return &NotificationHandler{notifService: ns}
 }
 
-func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
-	userIDStr, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		response.Error(w, domain.ErrUnauthorized)
-		return
+func getNotificationUserID(r *http.Request) (uuid.UUID, error) {
+	val := r.Context().Value(middleware.UserIDKey)
+	switch v := val.(type) {
+	case uuid.UUID:
+		return v, nil
+	case string:
+		return uuid.Parse(v)
+	default:
+		return uuid.Nil, domain.ErrUnauthorized
 	}
-	userID, err := uuid.Parse(userIDStr)
+}
+
+func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Request) {
+	userID, err := getNotificationUserID(r)
 	if err != nil {
 		response.Error(w, domain.ErrUnauthorized)
 		return
@@ -47,21 +55,20 @@ func (h *NotificationHandler) GetNotifications(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]interface{}{
-		"data":   notifications,
-		"total":  total,
-		"limit":  limit,
-		"offset": offset,
-	}, nil)
+	page := 1
+	if limit > 0 {
+		page = (offset / limit) + 1
+	}
+
+	response.JSON(w, http.StatusOK, notifications, &response.Meta{
+		Total: int(total),
+		Limit: limit,
+		Page:  page,
+	})
 }
 
 func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
-	userIDStr, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		response.Error(w, domain.ErrUnauthorized)
-		return
-	}
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := getNotificationUserID(r)
 	if err != nil {
 		response.Error(w, domain.ErrUnauthorized)
 		return
@@ -83,12 +90,7 @@ func (h *NotificationHandler) MarkAsRead(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *NotificationHandler) MarkAllAsRead(w http.ResponseWriter, r *http.Request) {
-	userIDStr, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		response.Error(w, domain.ErrUnauthorized)
-		return
-	}
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := getNotificationUserID(r)
 	if err != nil {
 		response.Error(w, domain.ErrUnauthorized)
 		return
@@ -103,12 +105,7 @@ func (h *NotificationHandler) MarkAllAsRead(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *NotificationHandler) GetPreferences(w http.ResponseWriter, r *http.Request) {
-	userIDStr, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		response.Error(w, domain.ErrUnauthorized)
-		return
-	}
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := getNotificationUserID(r)
 	if err != nil {
 		response.Error(w, domain.ErrUnauthorized)
 		return
@@ -124,12 +121,7 @@ func (h *NotificationHandler) GetPreferences(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *NotificationHandler) UpdatePreferences(w http.ResponseWriter, r *http.Request) {
-	userIDStr, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		response.Error(w, domain.ErrUnauthorized)
-		return
-	}
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := getNotificationUserID(r)
 	if err != nil {
 		response.Error(w, domain.ErrUnauthorized)
 		return

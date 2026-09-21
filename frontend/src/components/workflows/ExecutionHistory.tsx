@@ -1,48 +1,21 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { apiClient } from "@/lib/api-client";
+import { Loader2 } from "lucide-react";
 
 interface ExecutionLog {
   id: string;
   ruleName: string;
-  status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
+  status: string;
   eventType: string;
   durationMs: number;
   timestamp: string;
-  payload: any;
+  payload?: any;
 }
 
-const MOCK_LOGS: ExecutionLog[] = [
-  {
-    id: 'log-1',
-    ruleName: 'Auto-assign Backend Tasks',
-    status: 'SUCCESS',
-    eventType: 'TASK_CREATED',
-    durationMs: 45,
-    timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    payload: { taskId: 'T-123', assignee: 'alice@example.com', matchedConditions: true }
-  },
-  {
-    id: 'log-2',
-    ruleName: 'Notify on Blocked',
-    status: 'SKIPPED',
-    eventType: 'TASK_STATUS_CHANGED',
-    durationMs: 12,
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    payload: { taskId: 'T-124', previousStatus: 'IN_PROGRESS', newStatus: 'DONE', reason: 'Condition not met (Status != BLOCKED)' }
-  },
-  {
-    id: 'log-3',
-    ruleName: 'Escalate High Priority',
-    status: 'FAILED',
-    eventType: 'TASK_CREATED',
-    durationMs: 120,
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    payload: { taskId: 'T-125', error: 'User mapping not found for escalation group' }
-  }
-];
-
 const StatusBadge = ({ status }: { status: string }) => {
-  switch (status) {
+  const upper = status.toUpperCase();
+  switch (upper) {
     case 'SUCCESS':
       return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">SUCCESS</span>;
     case 'FAILED':
@@ -50,16 +23,63 @@ const StatusBadge = ({ status }: { status: string }) => {
     case 'SKIPPED':
       return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-500/10 text-gray-300 border border-gray-500/30">SKIPPED</span>;
     default:
-      return <span>{status}</span>;
+      return <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-accent/10 text-accent border border-accent/30">{upper}</span>;
   }
 };
 
-export default function ExecutionHistory() {
+export default function ExecutionHistory({ workflowId }: { workflowId?: string }) {
+  const [logs, setLogs] = useState<ExecutionLog[]>([]);
+  const [loading, setLoading] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!workflowId) return;
+
+    const fetchExecutions = async () => {
+      setLoading(true);
+      try {
+        const res = await apiClient.get<any[]>(`/workflows/${workflowId}/executions`);
+        if (res.data && res.data.length > 0) {
+          const formatted: ExecutionLog[] = res.data.map((ex: any) => ({
+            id: ex.id,
+            ruleName: "Workflow Automation Execution",
+            status: ex.status || "SUCCESS",
+            eventType: ex.event_type || "TASK_CREATED",
+            durationMs: ex.execution_time_ms || 12,
+            timestamp: ex.executed_at || new Date().toISOString(),
+            payload: ex.error_message ? { error: ex.error_message } : { status: ex.status, executed_at: ex.executed_at },
+          }));
+          setLogs(formatted);
+        }
+      } catch (err) {
+        console.error("Failed to fetch workflow executions", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExecutions();
+  }, [workflowId]);
 
   const toggleRow = (id: string) => {
     setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-12 bg-card rounded-xl border border-border">
+        <Loader2 className="animate-spin text-accent" size={24} />
+      </div>
+    );
+  }
+
+  if (logs.length === 0) {
+    return (
+      <div className="p-8 text-center bg-card rounded-xl border border-border text-xs text-foreground-secondary">
+        No execution logs recorded yet for this workflow.
+      </div>
+    );
+  }
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -75,7 +95,7 @@ export default function ExecutionHistory() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {MOCK_LOGS.map(log => (
+            {logs.map(log => (
               <React.Fragment key={log.id}>
                 <tr className="hover:bg-hover transition-colors">
                   <td className="p-3.5 sm:p-4">

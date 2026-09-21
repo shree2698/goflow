@@ -37,6 +37,16 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 	// User dependencies
 	userHandler := NewUserHandler(userRepo)
 
+	// Project & Task dependencies
+	projectRepo := repository.NewProjectRepository(db)
+	taskRepo := repository.NewTaskRepository(db)
+	projectHandler := NewProjectHandler(projectRepo, taskRepo, userRepo)
+
+	// Workflow dependencies
+	workflowRepo := repository.NewWorkflowRepository(db)
+	workflowService := service.NewWorkflowService(workflowRepo)
+	workflowHandler := NewWorkflowHandler(workflowService)
+
 	// Notification dependencies
 	notifRepo := repository.NewNotificationRepository(db)
 	prefRepo := repository.NewNotificationPreferenceRepository(db)
@@ -75,6 +85,17 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Delete("/{id}", userHandler.DeleteUser)
 		})
 
+		r.Route("/projects", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtService))
+			r.Get("/", projectHandler.ListProjects)
+			r.Post("/", projectHandler.CreateProject)
+			r.Get("/{id}", projectHandler.GetProject)
+			r.Get("/{id}/tasks", projectHandler.ListTasks)
+			r.Post("/{id}/tasks", projectHandler.CreateTask)
+			r.Get("/{projectId}/workflows", workflowHandler.ListByProject)
+			r.Post("/{projectId}/workflows", workflowHandler.Create)
+		})
+
 		r.Route("/analytics", func(r chi.Router) {
 			r.Use(middleware.RequireAuth(jwtService))
 			r.Get("/summary", analyticsHandler.GetSummary)
@@ -85,8 +106,15 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 		r.Route("/tasks", func(r chi.Router) {
 			r.Use(middleware.RequireAuth(jwtService))
 			r.Get("/search", searchHandler.SearchTasks)
+			r.Patch("/{id}", projectHandler.UpdateTask)
+			r.Delete("/{id}", projectHandler.DeleteTask)
 		})
 
+		r.Route("/workflows", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtService))
+			r.Patch("/{id}/toggle", workflowHandler.ToggleActive)
+			r.Get("/{id}/executions", workflowHandler.ListExecutions)
+		})
 
 		r.Route("/notifications", func(r chi.Router) {
 			r.Use(middleware.RequireAuth(jwtService))
