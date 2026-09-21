@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
@@ -15,7 +17,7 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port string `env:"SERVER_PORT" envDefault:"8080"`
+	Port string `env:"SERVER_PORT" envDefault:"8081"`
 	Env  string `env:"SERVER_ENV" envDefault:"development"`
 }
 
@@ -54,12 +56,20 @@ type CORSConfig struct {
 }
 
 func Load() (*Config, error) {
-	_ = godotenv.Load() // Ignore error if .env doesn't exist
+	_ = godotenv.Load()        // Load .env in current directory
+	_ = godotenv.Load("../.env") // Load .env in root directory if run from backend/
 
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	if port := os.Getenv("PORT"); port != "" && os.Getenv("SERVER_PORT") == "" {
+		cfg.Server.Port = port
+	}
+	if envVal := os.Getenv("ENV"); envVal != "" && os.Getenv("SERVER_ENV") == "" {
+		cfg.Server.Env = envVal
 	}
 
 	return &cfg, nil

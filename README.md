@@ -31,7 +31,13 @@ The simplest way to run the entire GoFlow stack (Backend API, Workers, Frontend,
    docker-compose up --build -d
    ```
 
-4. **Access the Application:**
+4. **Seed the Database (Initial Accounts):**
+   ```bash
+   npm run seed
+   # or: go run ./backend/cmd/seed
+   ```
+
+5. **Access the Application:**
    - **Frontend App:** [http://localhost:3000](http://localhost:3000)
    - **Backend API:** [http://localhost:8080/api/v1/health](http://localhost:8080/api/v1/health)
 
@@ -68,10 +74,11 @@ To start both the **Backend API** (`http://localhost:8080`) and **Frontend Next.
 ### 1. Database & Cache Infrastructure
 
 
-Start PostgreSQL and Redis via Docker Compose:
+Start Redis via Docker Compose (if using a global PostgreSQL instance):
 ```bash
-docker-compose up -d postgres redis
+docker compose up -d redis
 ```
+*(Or `docker compose up -d` to start all configured services).*
 
 ---
 
@@ -97,11 +104,35 @@ docker-compose up -d postgres redis
    ```bash
    go run ./cmd/server
    ```
-   *The backend server will run on `http://localhost:8080`.*
+   *The backend server will run on `http://localhost:8080` (or `http://localhost:8081`).*
 
 ---
 
-### 3. Frontend Setup (Next.js)
+### 3. Database Seeding (Initial Accounts)
+
+Seed the PostgreSQL database with default admin and employee accounts for development and testing:
+
+- **From root workspace (Recommended):**
+  ```bash
+  npm run seed
+  ```
+- **Or from the `backend/` directory:**
+  ```bash
+  cd backend
+  go run ./cmd/seed
+  ```
+
+#### Default Seeded Credentials
+
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin@goflow.com` | `Password123!` |
+| **Employee** | `employee1@goflow.com` | `Password123!` |
+| **Employee** | `employee2@goflow.com` | `Password123!` |
+
+---
+
+### 4. Frontend Setup (Next.js)
 
 1. Open a new terminal and navigate to the frontend folder:
    ```bash
@@ -137,7 +168,7 @@ docker-compose up -d postgres redis
 ```text
 goflow/
 ├── backend/                # Go Backend
-│   ├── cmd/                # Entrypoints (server, worker)
+│   ├── cmd/                # Entrypoints (server, worker, seed)
 │   ├── internal/           # Handlers, Services, Repositories, Domain, Engine, WS
 │   ├── migrations/         # PostgreSQL Schema Migrations
 │   └── Dockerfile          # Multi-stage Go Dockerfile

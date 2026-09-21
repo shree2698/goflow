@@ -12,6 +12,7 @@ import (
 	"github.com/shree2698/goflow/backend/internal/config"
 	"github.com/shree2698/goflow/backend/internal/handler"
 	"github.com/shree2698/goflow/backend/internal/websocket"
+	"github.com/shree2698/goflow/backend/migrations"
 	"github.com/shree2698/goflow/backend/pkg/logger"
 )
 
@@ -30,6 +31,10 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer db.Close()
+
+	if err := migrations.Run(context.Background(), db, log); err != nil {
+		log.Fatal().Err(err).Msg("Failed to run database migrations")
+	}
 
 	redisClient, err := config.NewRedisClient(cfg.Redis, log)
 	if err != nil {

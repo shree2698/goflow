@@ -1,33 +1,11 @@
-
-
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: goflow-db
-    environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-goflow}
-    ports:
-      - "5433:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-goflow}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - goflow-network
-    restart: unless-stopped
-
+  # Redis cache and pub/sub service
   redis:
     image: redis:7-alpine
     container_name: goflow-redis
     command: redis-server --requirepass "${REDIS_PASSWORD:-}"
     ports:
-      - "6380:6379"
-
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redisdata:/data
     healthcheck:
@@ -39,9 +17,32 @@ services:
       - goflow-network
     restart: unless-stopped
 
+  # PostgreSQL service is commented out because a global PostgreSQL container
+  # (postgres_global on port 5432) is already running.
+  # Uncomment below if you want an isolated PostgreSQL instance for GoFlow.
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: goflow-db
+  #   environment:
+  #     POSTGRES_USER: ${DB_USER:-postgres}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+  #     POSTGRES_DB: ${DB_NAME:-goflow}
+  #   ports:
+  #     - "${DB_PORT:-5432}:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-goflow}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - goflow-network
+  #   restart: unless-stopped
+
 volumes:
-  pgdata:
   redisdata:
+  # pgdata:
 
 networks:
   goflow-network:
