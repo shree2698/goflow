@@ -12,6 +12,7 @@ import {
   ChevronDown,
   User as UserIcon,
   Key as KeyIcon,
+  Bot,
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { useWebSocket } from "@/lib/useWebSocket";
@@ -21,9 +22,10 @@ import { LogoutConfirmModal } from "@/components/auth/LogoutConfirmModal";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
+  onOpenAssistant?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
+export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAssistant }) => {
   const { user, accessToken, clearAuth } = useAuthStore();
   const router = useRouter();
 
@@ -246,8 +248,20 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         </div>
       </div>
 
-      {/* Right: Notifications, Connection Status & Avatar Dropdown Menu */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+      {/* Right: AI Assistant, Notifications & Avatar Dropdown Menu */}
+      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+        {onOpenAssistant && (
+          <button
+            type="button"
+            onClick={onOpenAssistant}
+            aria-label="Open AI Task Assistant"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-canvas shadow-neu-btn active:shadow-neu-btn-active text-foreground hover:text-accent transition-all text-xs font-semibold border border-white/60 group"
+          >
+            <Bot size={16} className="text-accent group-hover:scale-110 transition-transform" />
+            <span className="hidden sm:inline font-bold">AI Assistant</span>
+          </button>
+        )}
+
         <div className="rounded-xl shadow-neu-btn flex items-center justify-center">
           <NotificationBell />
         </div>

@@ -14,6 +14,16 @@ type Config struct {
 	JWT      JWTConfig
 	SMTP     SMTPConfig
 	CORS     CORSConfig
+	AI       AIConfig
+}
+
+type AIConfig struct {
+	Provider   string `env:"AI_PROVIDER" envDefault:"local"`
+	APIKey     string `env:"AI_API_KEY"`
+	Model      string `env:"AI_MODEL" envDefault:"gpt-4o-mini"`
+	ServiceURL string `env:"AI_SERVICE_URL"`
+	OpenAIKey  string `env:"OPENAI_API_KEY"`
+	GeminiKey  string `env:"GEMINI_API_KEY"`
 }
 
 type ServerConfig struct {

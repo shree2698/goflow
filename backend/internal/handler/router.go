@@ -62,6 +62,11 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 	searchService := service.NewSearchService(db)
 	searchHandler := NewSearchHandler(searchService)
 
+	// AI Assistant dependencies
+	assistantRepo := repository.NewAssistantRepository(db)
+	assistantService := service.NewAssistantService(cfg.AI, assistantRepo, taskRepo, projectRepo, userRepo, eb)
+	assistantHandler := NewAssistantHandler(assistantService, userRepo)
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", healthHandler.HealthCheck)
 
@@ -134,6 +139,11 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Patch("/{id}/read", notifHandler.MarkAsRead)
 		})
 
+		r.Route("/ai", func(r chi.Router) {
+			r.Use(middleware.RequireAuth(jwtService))
+			r.Post("/assistant", assistantHandler.ProcessMessage)
+			r.Get("/assistant/suggestions", assistantHandler.GetSuggestions)
+		})
 
 		wsHandler := websocket.NewHandler(wsHub, jwtService)
 		r.Get("/ws", wsHandler.ServeWS)
