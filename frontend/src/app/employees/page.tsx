@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
-import { UserPlus, Edit2, Trash2, Shield, User, Key, X, CheckCircle } from "lucide-react";
+import { UserPlus, Edit2, Trash2, Shield, User, Key, X, CheckCircle, FolderKanban } from "lucide-react";
+import { EmployeeProjectsModal } from "@/components/employees/EmployeeProjectsModal";
 
 interface Employee {
   id: string;
@@ -24,6 +25,7 @@ export default function EmployeesPage() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [selectedEmployeeForProjects, setSelectedEmployeeForProjects] = useState<Employee | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -157,6 +159,7 @@ export default function EmployeesPage() {
                     <th className="px-6 py-4">Employee</th>
                     <th className="px-6 py-4">Email</th>
                     <th className="px-6 py-4">Role</th>
+                    <th className="px-6 py-4">Project Access</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -184,6 +187,16 @@ export default function EmployeesPage() {
                           {emp.role || "employee"}
                         </span>
                       </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => setSelectedEmployeeForProjects(emp)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-canvas shadow-neu-btn active:shadow-neu-btn-active text-foreground hover:text-accent text-xs font-semibold border border-white/60 transition-all cursor-pointer"
+                          title="View and Manage Project Assignments"
+                        >
+                          <FolderKanban size={14} className="text-accent" />
+                          <span>Assigned Projects</span>
+                        </button>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
@@ -208,7 +221,7 @@ export default function EmployeesPage() {
                   ))}
                   {employees.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-foreground-secondary text-sm">
+                      <td colSpan={5} className="px-6 py-12 text-center text-foreground-secondary text-sm">
                         No employees found. Click "Add Employee" to create one.
                       </td>
                     </tr>
@@ -311,6 +324,13 @@ export default function EmployeesPage() {
             </div>
           </div>
         )}
+
+        {/* Employee Projects Access Modal */}
+        <EmployeeProjectsModal
+          employee={selectedEmployeeForProjects}
+          isOpen={!!selectedEmployeeForProjects}
+          onClose={() => setSelectedEmployeeForProjects(null)}
+        />
       </div>
     </ProtectedRoute>
   );

@@ -88,6 +88,7 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 				admin.Post("/", userHandler.CreateUser)
 				admin.Patch("/{id}", userHandler.UpdateUser)
 				admin.Delete("/{id}", userHandler.DeleteUser)
+				admin.Get("/{id}/projects", projectHandler.ListUserProjects)
 			})
 		})
 
@@ -96,6 +97,9 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Get("/", projectHandler.ListProjects)
 			r.Post("/", projectHandler.CreateProject)
 			r.Get("/{id}", projectHandler.GetProject)
+			r.Get("/{id}/members", projectHandler.ListMembers)
+			r.Post("/{id}/members", projectHandler.AddMember)
+			r.Delete("/{id}/members/{userId}", projectHandler.RemoveMember)
 			r.Get("/{id}/tasks", projectHandler.ListTasks)
 			r.Post("/{id}/tasks", projectHandler.CreateTask)
 			r.Get("/{projectId}/workflows", workflowHandler.ListByProject)

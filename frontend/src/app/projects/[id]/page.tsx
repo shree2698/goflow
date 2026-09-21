@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiClient } from "@/lib/api-client";
-import { Plus, Workflow as WorkflowIcon, ArrowLeft, GripVertical, X, CheckCircle2, Clock, AlertTriangle, HelpCircle, LucideIcon, Loader2 } from "lucide-react";
+import { useAuthStore } from "@/stores/auth-store";
+import { ProjectMembersModal } from "@/components/projects/ProjectMembersModal";
+import { Plus, Workflow as WorkflowIcon, ArrowLeft, GripVertical, X, CheckCircle2, Clock, AlertTriangle, HelpCircle, LucideIcon, Loader2, Users } from "lucide-react";
 
 type ColumnType = 'TODO' | 'IN_PROGRESS' | 'BLOCKED' | 'COMPLETED';
 
@@ -48,6 +50,7 @@ function normalizePriority(p: string): 'LOW' | 'MEDIUM' | 'HIGH' {
 }
 
 export default function ProjectBoardPage({ params }: { params: { id: string } }) {
+  const user = useAuthStore((state) => state.user);
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +58,9 @@ export default function ProjectBoardPage({ params }: { params: { id: string } })
   const [filterText, setFilterText] = useState("");
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [dragOverCol, setDragOverCol] = useState<ColumnType | null>(null);
+
+  // Members Modal state
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
 
   // New Task Modal state
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
@@ -250,6 +256,14 @@ export default function ProjectBoardPage({ params }: { params: { id: string } })
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setIsMembersModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-canvas shadow-neu-btn hover:text-accent active:shadow-neu-btn-active text-foreground text-xs sm:text-sm font-semibold transition-all min-h-[40px]"
+              title="View & Manage Project Access"
+            >
+              <Users size={16} className="text-accent" />
+              <span>{user?.role === "admin" ? "Manage Access" : "Team Members"}</span>
+            </button>
             <Link
               href={`/projects/${params.id}/workflows`}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-canvas shadow-neu-btn hover:text-accent active:shadow-neu-btn-active text-foreground text-xs sm:text-sm font-semibold transition-all min-h-[40px]"
@@ -481,6 +495,15 @@ export default function ProjectBoardPage({ params }: { params: { id: string } })
             </div>
           </div>
         )}
+
+        {/* Project Members Modal */}
+        <ProjectMembersModal
+          projectId={params.id}
+          projectName={project?.name}
+          isOpen={isMembersModalOpen}
+          onClose={() => setIsMembersModalOpen(false)}
+          isAdmin={user?.role === "admin"}
+        />
       </div>
     </ProtectedRoute>
   );

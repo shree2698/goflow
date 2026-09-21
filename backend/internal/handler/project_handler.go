@@ -431,3 +431,201 @@ func (h *ProjectHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 
 	response.NoContent(w)
 }
+
+type AddMemberReq struct {
+	UserID string `json:"user_id"`
+	Role   string `json:"role"`
+}
+
+// ListMembers handles GET /api/v1/projects/{id}/members
+func (h *ProjectHandler) ListMembers(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.Error(w, domain.ErrUnauthorized)
+		return
+	}
+
+	projectIDStr := chi.URLParam(r, "id")
+	projectID, err := uuid.Parse(projectIDStr)
+	if err != nil {
+		response.Error(w, domain.NewBadRequest("Invalid project ID"))
+		return
+	}
+
+	project, err := h.projectRepo.GetByID(r.Context(), projectID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		if project.OwnerID != userID {
+			_, err := h.projectRepo.GetMemberRole(r.Context(), projectID, userID)
+			if err != nil {
+				response.Error(w, domain.ErrForbidden)
+				return
+			}
+		}
+	}
+
+	members, err := h.projectRepo.ListMembers(r.Context(), projectID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+	if members == nil {
+		members = []domain.ProjectMemberWithUser{}
+	}
+
+	response.JSON(w, http.StatusOK, members, nil)
+}
+
+// AddMember handles POST /api/v1/projects/{id}/members
+func (h *ProjectHandler) AddMember(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.Error(w, domain.ErrUnauthorized)
+		return
+	}
+
+	projectIDStr := chi.URLParam(r, "id")
+	projectID, err := uuid.Parse(projectIDStr)
+	if err != nil {
+		response.Error(w, domain.NewBadRequest("Invalid project ID"))
+		return
+	}
+
+	project, err := h.projectRepo.GetByID(r.Context(), projectID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		if project.OwnerID != userID {
+			role, err := h.projectRepo.GetMemberRole(r.Context(), projectID, userID)
+			if err != nil || (role != domain.ProjectRoleOwner && role != domain.ProjectRoleAdmin) {
+				response.Error(w, domain.ErrForbidden)
+				return
+			}
+		}
+	}
+
+	var req AddMemberReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response.Error(w, domain.NewBadRequest("Invalid request body"))
+		return
+	}
+
+	targetUserID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		response.Error(w, domain.NewBadRequest("Invalid user_id"))
+		return
+	}
+
+	targetUser, err := h.userRepo.GetByID(targetUserID)
+	if err != nil || targetUser == nil {
+		response.Error(w, domain.NewNotFound("User not found"))
+		return
+	}
+
+	role := domain.ProjectRoleMember
+	if req.Role != "" {
+		upper := domain.ProjectRole(strings.ToUpper(req.Role))
+		switch upper {
+		case domain.ProjectRoleOwner, domain.ProjectRoleAdmin, domain.ProjectRoleMember, domain.ProjectRoleViewer:
+			role = upper
+		default:
+			role = domain.ProjectRoleMember
+		}
+	}
+
+	member := &domain.ProjectMember{
+		ProjectID: projectID,
+		UserID:    targetUserID,
+		Role:      role,
+		JoinedAt:  time.Now(),
+	}
+
+	if err := h.projectRepo.AddMember(r.Context(), member); err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	response.JSON(w, http.StatusOK, map[string]any{
+		"message":    "Member added successfully",
+		"project_id": projectID,
+		"user_id":    targetUserID,
+		"role":       role,
+	}, nil)
+}
+
+// RemoveMember handles DELETE /api/v1/projects/{id}/members/{userId}
+func (h *ProjectHandler) RemoveMember(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.Error(w, domain.ErrUnauthorized)
+		return
+	}
+
+	projectIDStr := chi.URLParam(r, "id")
+	projectID, err := uuid.Parse(projectIDStr)
+	if err != nil {
+		response.Error(w, domain.NewBadRequest("Invalid project ID"))
+		return
+	}
+
+	targetUserIDStr := chi.URLParam(r, "userId")
+	targetUserID, err := uuid.Parse(targetUserIDStr)
+	if err != nil {
+		response.Error(w, domain.NewBadRequest("Invalid target user ID"))
+		return
+	}
+
+	project, err := h.projectRepo.GetByID(r.Context(), projectID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		if project.OwnerID != userID {
+			role, err := h.projectRepo.GetMemberRole(r.Context(), projectID, userID)
+			if err != nil || (role != domain.ProjectRoleOwner && role != domain.ProjectRoleAdmin) {
+				response.Error(w, domain.ErrForbidden)
+				return
+			}
+		}
+	}
+
+	if err := h.projectRepo.RemoveMember(r.Context(), projectID, targetUserID); err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	response.NoContent(w)
+}
+
+// ListUserProjects handles GET /api/v1/users/{id}/projects
+func (h *ProjectHandler) ListUserProjects(w http.ResponseWriter, r *http.Request) {
+	targetUserIDStr := chi.URLParam(r, "id")
+	targetUserID, err := uuid.Parse(targetUserIDStr)
+	if err != nil {
+		response.Error(w, domain.NewBadRequest("Invalid user ID"))
+		return
+	}
+
+	projects, err := h.projectRepo.ListByUser(r.Context(), targetUserID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+	if projects == nil {
+		projects = []domain.Project{}
+	}
+
+	response.JSON(w, http.StatusOK, projects, nil)
+}
