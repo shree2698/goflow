@@ -39,7 +39,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full bg-canvas rounded-3xl p-6 sm:p-10 shadow-neu-flat border border-white/70 my-auto">
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent to-lavender flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-neu-btn">
-            G
+            GO
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">Welcome Back</h1>
           <p className="text-xs sm:text-sm text-foreground-secondary mt-1 font-medium">Log in to your GoFlow account</p>
