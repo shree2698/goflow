@@ -78,11 +78,14 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Get("/me/notification-preferences", notifHandler.GetPreferences)
 			r.Patch("/me/notification-preferences", notifHandler.UpdatePreferences)
 
-			// Admin Employee Management
-			r.Get("/", userHandler.ListUsers)
-			r.Post("/", userHandler.CreateUser)
-			r.Patch("/{id}", userHandler.UpdateUser)
-			r.Delete("/{id}", userHandler.DeleteUser)
+			// Admin Employee Management (Restricted to admin role)
+			r.Group(func(admin chi.Router) {
+				admin.Use(middleware.RequireRole(userRepo, "admin"))
+				admin.Get("/", userHandler.ListUsers)
+				admin.Post("/", userHandler.CreateUser)
+				admin.Patch("/{id}", userHandler.UpdateUser)
+				admin.Delete("/{id}", userHandler.DeleteUser)
+			})
 		})
 
 		r.Route("/projects", func(r chi.Router) {

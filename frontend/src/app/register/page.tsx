@@ -26,7 +26,7 @@ export default function RegisterPage() {
 
     try {
       const res = await apiClient.post<{ user: any; tokens: { access_token: string; refresh_token: string } }>("/auth/register", formData);
-      setAuth(res.data.user, res.data.tokens.access_token);
+      setAuth(res.data.user, res.data.tokens.access_token, res.data.tokens.refresh_token);
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.error?.message || "An error occurred during registration.");

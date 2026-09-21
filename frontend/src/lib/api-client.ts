@@ -59,28 +59,40 @@ class ApiClient {
       if (!this.isRefreshing) {
         this.isRefreshing = true;
         try {
+          const { useAuthStore } = require("../stores/auth-store");
+          const currentRefreshToken = useAuthStore.getState().refreshToken;
+
+          if (!currentRefreshToken) {
+            useAuthStore.getState().clearAuth();
+            throw new Error("No refresh token available");
+          }
+
           const refreshRes = await fetch(`${this.baseUrl}/auth/refresh`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" }
-            // assuming credentials: "include" if refresh token is in cookies
-            // or if we have to send it, but we said refresh token flow
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: currentRefreshToken }),
           });
           
           if (!refreshRes.ok) {
-            const { useAuthStore } = require("../stores/auth-store");
             useAuthStore.getState().clearAuth();
             throw await refreshRes.json();
           }
           
           const data = await refreshRes.json();
-          const { useAuthStore } = require("../stores/auth-store");
-          useAuthStore.getState().setAuth(data.data.user, data.data.access_token);
+          const tokens = data.tokens || data.data?.tokens;
+          const newAccessToken = tokens?.access_token || data.access_token;
+          const newRefreshToken = tokens?.refresh_token || data.refresh_token || currentRefreshToken;
+          const currentUser = useAuthStore.getState().user;
+
+          if (currentUser && newAccessToken) {
+            useAuthStore.getState().setAuth(currentUser, newAccessToken, newRefreshToken);
+          }
           
           this.isRefreshing = false;
-          this.onRefreshed(data.data.access_token);
+          this.onRefreshed(newAccessToken);
           
           // Retry with new token
-          const newHeaders = { ...options.headers, Authorization: `Bearer ${data.data.access_token}` };
+          const newHeaders = { ...options.headers, Authorization: `Bearer ${newAccessToken}` };
           return fetch(url, { ...options, headers: newHeaders });
         } catch (error) {
           this.isRefreshing = false;
