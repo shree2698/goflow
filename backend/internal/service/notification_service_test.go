@@ -45,7 +45,7 @@ func (m *mockPrefRepo) Upsert(ctx context.Context, pref *domain.NotificationPref
 }
 
 func TestNotificationService_SendNotification(t *testing.T) {
-	s := NewNotificationService(&mockNotifRepo{}, &mockPrefRepo{})
+	s := NewNotificationService(&mockNotifRepo{}, &mockPrefRepo{}, nil)
 	n := &domain.Notification{
 		ID:     uuid.New(),
 		UserID: uuid.New(),

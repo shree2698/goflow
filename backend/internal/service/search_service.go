@@ -36,9 +36,9 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 	}
 
 	if params.Query != "" {
-		whereClause += fmt.Sprintf(" AND (title ILIKE $%d OR description ILIKE $%d)", argIdx, argIdx)
-		args = append(args, "%"+params.Query+"%")
-		argIdx++
+		whereClause += fmt.Sprintf(" AND (search_vector @@ plainto_tsquery('english', $%d) OR title ILIKE $%d OR description ILIKE $%d)", argIdx, argIdx+1, argIdx+1)
+		args = append(args, params.Query, "%"+params.Query+"%")
+		argIdx += 2
 	}
 
 	if params.Status != "" {

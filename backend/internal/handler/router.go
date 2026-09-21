@@ -12,10 +12,11 @@ import (
 	"github.com/shree2698/goflow/backend/internal/repository"
 	"github.com/shree2698/goflow/backend/internal/service"
 	"github.com/shree2698/goflow/backend/internal/websocket"
+	"github.com/shree2698/goflow/backend/pkg/eventbus"
 	"github.com/shree2698/goflow/backend/pkg/jwt"
 )
 
-func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisClient *redis.Client, wsHub *websocket.Hub) *chi.Mux {
+func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisClient *redis.Client, wsHub *websocket.Hub, eb eventbus.EventBus) *chi.Mux {
 
 	r := chi.NewRouter()
 
@@ -40,7 +41,7 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 	// Project & Task dependencies
 	projectRepo := repository.NewProjectRepository(db)
 	taskRepo := repository.NewTaskRepository(db)
-	projectHandler := NewProjectHandler(projectRepo, taskRepo, userRepo)
+	projectHandler := NewProjectHandler(projectRepo, taskRepo, userRepo, eb)
 
 	// Workflow dependencies
 	workflowRepo := repository.NewWorkflowRepository(db)
@@ -50,7 +51,7 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 	// Notification dependencies
 	notifRepo := repository.NewNotificationRepository(db)
 	prefRepo := repository.NewNotificationPreferenceRepository(db)
-	notifService := service.NewNotificationService(notifRepo, prefRepo)
+	notifService := service.NewNotificationService(notifRepo, prefRepo, wsHub)
 	notifHandler := NewNotificationHandler(notifService)
 
 	// Analytics dependencies

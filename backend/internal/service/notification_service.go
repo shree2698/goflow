@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shree2698/goflow/backend/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/websocket"
 )
 
 type NotificationService interface {
@@ -20,15 +23,18 @@ type NotificationService interface {
 type notificationService struct {
 	notifRepo domain.NotificationRepository
 	prefRepo  domain.NotificationPreferenceRepository
+	wsHub     *websocket.Hub
 }
 
 func NewNotificationService(
 	notifRepo domain.NotificationRepository,
 	prefRepo domain.NotificationPreferenceRepository,
+	wsHub *websocket.Hub,
 ) NotificationService {
 	return &notificationService{
 		notifRepo: notifRepo,
 		prefRepo:  prefRepo,
+		wsHub:     wsHub,
 	}
 }
 
@@ -48,6 +54,16 @@ func (s *notificationService) SendNotification(ctx context.Context, n *domain.No
 	if deliverInApp {
 		if err := s.notifRepo.Create(ctx, n); err != nil {
 			return err
+		}
+
+		// Push real-time event to user via WebSocket hub
+		if s.wsHub != nil {
+			payloadBytes, _ := json.Marshal(n)
+			s.wsHub.SendToUser(n.UserID, &websocket.WSEvent{
+				Type:      websocket.EventNotificationReceived,
+				Payload:   payloadBytes,
+				Timestamp: time.Now(),
+			})
 		}
 	}
 

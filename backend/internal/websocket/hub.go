@@ -124,3 +124,23 @@ func (h *Hub) SendToUser(userID uuid.UUID, event *WSEvent) {
 		}
 	}
 }
+
+func (h *Hub) Broadcast(event *WSEvent) {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	for client := range h.clients {
+		select {
+		case client.Send <- data:
+		default:
+			close(client.Send)
+			delete(h.clients, client)
+		}
+	}
+}
+

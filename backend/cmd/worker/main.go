@@ -8,6 +8,8 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
+	"github.com/shree2698/goflow/backend/internal/config"
+	"github.com/shree2698/goflow/backend/internal/repository"
 	"github.com/shree2698/goflow/backend/internal/worker"
 	"github.com/shree2698/goflow/backend/internal/worker/handlers"
 )
@@ -15,19 +17,41 @@ import (
 func main() {
 	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
-	// Connect to Redis
-	redisURL := os.Getenv("REDIS_URL")
-	if redisURL == "" {
-		redisURL = "redis://localhost:6379/0"
-	}
-	opts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		logger.Fatal().Err(err).Msg("Invalid REDIS_URL")
-	}
-	rdb := redis.NewClient(opts)
+	cfg, _ := config.Load()
 
-	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		logger.Fatal().Err(err).Msg("Failed to connect to Redis")
+	// Connect to Database if config is available
+	var workflowRepo repository.WorkflowRepository
+	if cfg != nil {
+		db, err := config.NewPostgresPool(cfg.Database, logger)
+		if err == nil {
+			defer db.Close()
+			workflowRepo = repository.NewWorkflowRepository(db)
+		} else {
+			logger.Warn().Err(err).Msg("Database connection optional in worker, continuing...")
+		}
+	}
+
+	// Connect to Redis
+	var rdb *redis.Client
+	if cfg != nil {
+		var err error
+		rdb, err = config.NewRedisClient(cfg.Redis, logger)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Failed to connect to Redis using config")
+		}
+	} else {
+		redisURL := os.Getenv("REDIS_URL")
+		if redisURL == "" {
+			redisURL = "redis://localhost:6379/0"
+		}
+		opts, err := redis.ParseURL(redisURL)
+		if err != nil {
+			logger.Fatal().Err(err).Msg("Invalid REDIS_URL")
+		}
+		rdb = redis.NewClient(opts)
+		if err := rdb.Ping(context.Background()).Err(); err != nil {
+			logger.Fatal().Err(err).Msg("Failed to connect to Redis")
+		}
 	}
 	defer rdb.Close()
 
@@ -39,8 +63,14 @@ func main() {
 	pool := worker.NewWorkerPool(queue, &logger, concurrency)
 
 	// Register Handlers
-	workflowHandler := handlers.NewWorkflowHandler()
-	remindersHandler := handlers.NewRemindersHandler()
+	workflowHandler := handlers.NewWorkflowHandler(workflowRepo, logger)
+	remindersHandler := handlers.NewRemindersHandler(nil, logger)
+	if cfg != nil {
+		if db, err := config.NewPostgresPool(cfg.Database, logger); err == nil {
+			defer db.Close()
+			remindersHandler = handlers.NewRemindersHandler(db, logger)
+		}
+	}
 
 	pool.RegisterHandler(worker.JOB_WORKFLOW_EXECUTE, workflowHandler.Handle)
 	pool.RegisterHandler(worker.JOB_SCHEDULED_REMINDERS, remindersHandler.Handle)

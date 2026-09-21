@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/shree2698/goflow/backend/internal/domain"
 	"github.com/shree2698/goflow/backend/internal/handler/middleware"
 	"github.com/shree2698/goflow/backend/internal/repository"
+	"github.com/shree2698/goflow/backend/pkg/eventbus"
 	"github.com/shree2698/goflow/backend/pkg/response"
 )
 
@@ -17,17 +19,20 @@ type ProjectHandler struct {
 	projectRepo repository.ProjectRepository
 	taskRepo    repository.TaskRepository
 	userRepo    domain.UserRepository
+	eventBus    eventbus.EventBus
 }
 
 func NewProjectHandler(
 	projectRepo repository.ProjectRepository,
 	taskRepo repository.TaskRepository,
 	userRepo domain.UserRepository,
+	eventBus eventbus.EventBus,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		projectRepo: projectRepo,
 		taskRepo:    taskRepo,
 		userRepo:    userRepo,
+		eventBus:    eventBus,
 	}
 }
 
@@ -223,6 +228,21 @@ func (h *ProjectHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.eventBus != nil {
+		h.eventBus.Publish(domain.Event{
+			ID:        uuid.New(),
+			Type:      "TASK_CREATED",
+			ProjectID: task.ProjectID,
+			Payload: map[string]any{
+				"task_id":  task.ID.String(),
+				"title":    task.Title,
+				"status":   string(task.Status),
+				"priority": string(task.Priority),
+			},
+			Timestamp: time.Now(),
+		})
+	}
+
 	response.Created(w, task)
 }
 
@@ -286,6 +306,21 @@ func (h *ProjectHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		_ = h.taskRepo.UpdateStatus(r.Context(), taskID, *req.Status)
 	}
 
+	if h.eventBus != nil {
+		h.eventBus.Publish(domain.Event{
+			ID:        uuid.New(),
+			Type:      "TASK_UPDATED",
+			ProjectID: task.ProjectID,
+			Payload: map[string]any{
+				"task_id":  task.ID.String(),
+				"title":    task.Title,
+				"status":   string(task.Status),
+				"priority": string(task.Priority),
+			},
+			Timestamp: time.Now(),
+		})
+	}
+
 	response.JSON(w, http.StatusOK, task, nil)
 }
 
@@ -298,9 +333,23 @@ func (h *ProjectHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	task, _ := h.taskRepo.GetByID(r.Context(), taskID)
+
 	if err := h.taskRepo.Delete(r.Context(), taskID); err != nil {
 		response.Error(w, err)
 		return
+	}
+
+	if h.eventBus != nil && task != nil {
+		h.eventBus.Publish(domain.Event{
+			ID:        uuid.New(),
+			Type:      "TASK_DELETED",
+			ProjectID: task.ProjectID,
+			Payload: map[string]any{
+				"task_id": taskID.String(),
+			},
+			Timestamp: time.Now(),
+		})
 	}
 
 	response.NoContent(w)
