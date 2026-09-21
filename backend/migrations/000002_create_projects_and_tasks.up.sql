@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     status VARCHAR(50) NOT NULL DEFAULT 'todo',
     priority VARCHAR(50) NOT NULL DEFAULT 'medium',
     due_date TIMESTAMPTZ,
-    creator_id UUID NOT NULL REFERENCES users(id),
+    creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
     assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
     tags TEXT[] DEFAULT '{}',
     completed_at TIMESTAMPTZ,

@@ -5,14 +5,19 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useRouter } from "next/navigation";
 import { LogOut, Menu, Search as SearchIcon } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { useWebSocket } from "@/lib/useWebSocket";
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
-  const { user, clearAuth } = useAuthStore();
+  const { user, accessToken, clearAuth } = useAuthStore();
   const router = useRouter();
+
+  const wsBase = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8081/api/v1/ws";
+  const wsUrl = accessToken ? `${wsBase}?token=${accessToken}` : null;
+  const { status: wsStatus } = useWebSocket(wsUrl);
 
   const handleLogout = () => {
     clearAuth();
@@ -61,9 +66,15 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
         </div>
 
         <span 
-          className="inline-block w-2.5 h-2.5 bg-accent rounded-full shrink-0 shadow-neu-flat-sm animate-pulse" 
-          title="Live WS Connected"
-          aria-label="WebSocket Connected"
+          className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 shadow-neu-flat-sm transition-colors ${
+            wsStatus === "connected"
+              ? "bg-emerald-500 animate-pulse"
+              : wsStatus === "connecting"
+              ? "bg-amber-400 animate-ping"
+              : "bg-gray-400"
+          }`} 
+          title={`WebSocket: ${wsStatus}`}
+          aria-label={`WebSocket: ${wsStatus}`}
         />
 
         <div className="w-9 h-9 rounded-xl bg-canvas shadow-neu-flat-sm flex items-center justify-center text-sm font-bold text-accent uppercase shrink-0 border border-white/60">

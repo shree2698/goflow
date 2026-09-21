@@ -65,6 +65,8 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 		r.Get("/health", healthHandler.HealthCheck)
 
 		r.Route("/auth", func(r chi.Router) {
+			// Rate limit authentication attempts: max 15 requests per minute per IP
+			r.Use(middleware.RateLimit(redisClient, 15, time.Minute))
 			r.Post("/register", authHandler.Register)
 			r.Post("/login", authHandler.Login)
 			r.Post("/refresh", authHandler.Refresh)
@@ -127,11 +129,8 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 		})
 
 
-		r.Group(func(r chi.Router) {
-			r.Use(middleware.RequireAuth(jwtService))
-			wsHandler := websocket.NewHandler(wsHub)
-			r.Get("/ws", wsHandler.ServeWS)
-		})
+		wsHandler := websocket.NewHandler(wsHub, jwtService)
+		r.Get("/ws", wsHandler.ServeWS)
 	})
 
 

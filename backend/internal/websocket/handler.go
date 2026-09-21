@@ -2,11 +2,14 @@ package websocket
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/shree2698/goflow/backend/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/handler/middleware"
+	"github.com/shree2698/goflow/backend/pkg/jwt"
 	"github.com/shree2698/goflow/backend/pkg/response"
 )
 
@@ -19,23 +22,46 @@ var upgrader = websocket.Upgrader{
 }
 
 type Handler struct {
-	hub *Hub
+	hub        *Hub
+	jwtService jwt.TokenService
 }
 
-func NewHandler(hub *Hub) *Handler {
-	return &Handler{hub: hub}
+func NewHandler(hub *Hub, jwtService jwt.TokenService) *Handler {
+	return &Handler{
+		hub:        hub,
+		jwtService: jwtService,
+	}
 }
 
 func (h *Handler) ServeWS(w http.ResponseWriter, r *http.Request) {
-	userIDStr, ok := r.Context().Value("user_id").(string)
-	if !ok {
-		response.Error(w, domain.NewUnauthorized("Unauthorized"))
-		return
-	}
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		response.Error(w, domain.NewUnauthorized("Invalid user ID"))
-		return
+	var userID uuid.UUID
+
+	// 1. Try from context if middleware already authenticated
+	if uid, ok := r.Context().Value(middleware.UserIDKey).(uuid.UUID); ok {
+		userID = uid
+	} else {
+		// 2. Try query parameter ?token=...
+		token := r.URL.Query().Get("token")
+		if token == "" {
+			// 3. Try Authorization header Bearer ...
+			authHeader := r.Header.Get("Authorization")
+			parts := strings.Split(authHeader, " ")
+			if len(parts) == 2 && parts[0] == "Bearer" {
+				token = parts[1]
+			}
+		}
+
+		if token == "" {
+			response.Error(w, domain.NewUnauthorized("Authentication token required"))
+			return
+		}
+
+		claims, err := h.jwtService.ValidateToken(token, "access")
+		if err != nil {
+			response.Error(w, domain.NewUnauthorized("Invalid or expired token"))
+			return
+		}
+		userID = claims.UserID
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)

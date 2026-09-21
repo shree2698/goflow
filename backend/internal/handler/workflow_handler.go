@@ -43,7 +43,7 @@ func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, domain.NewBadRequest("Invalid request payload"))
 		return
 	}
-	req.CreatorID = creatorID
+	req.CreatorID = &creatorID
 
 	if err := h.workflowService.CreateWorkflow(r.Context(), &req); err != nil {
 		response.Error(w, err)

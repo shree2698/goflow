@@ -30,7 +30,7 @@ type Task struct {
 	Status      TaskStatus     `json:"status" db:"status"`
 	Priority    TaskPriority   `json:"priority" db:"priority"`
 	DueDate     *time.Time     `json:"due_date" db:"due_date"`
-	CreatorID   uuid.UUID      `json:"creator_id" db:"creator_id"`
+	CreatorID   *uuid.UUID     `json:"creator_id,omitempty" db:"creator_id"`
 	AssigneeID  *uuid.UUID     `json:"assignee_id" db:"assignee_id"`
 	Tags        pq.StringArray `json:"tags" db:"tags"`
 	CompletedAt *time.Time     `json:"completed_at" db:"completed_at"`

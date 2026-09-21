@@ -27,7 +27,7 @@ type Action struct {
 type Workflow struct {
 	ID          uuid.UUID       `json:"id" db:"id"`
 	ProjectID   uuid.UUID       `json:"project_id" db:"project_id"`
-	CreatorID   uuid.UUID       `json:"creator_id" db:"creator_id"`
+	CreatorID   *uuid.UUID      `json:"creator_id,omitempty" db:"creator_id"`
 	Name        string          `json:"name" db:"name"`
 	TriggerType string          `json:"trigger_type" db:"trigger_type"`
 	Conditions  json.RawMessage `json:"conditions" db:"conditions"`

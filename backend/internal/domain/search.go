@@ -7,6 +7,7 @@ type SearchParams struct {
 	Status    string `json:"status"`
 	Priority  string `json:"priority"`
 	ProjectID string `json:"project_id"`
+	UserID    string `json:"user_id"`
 	SortBy    string `json:"sort_by"`
 	SortOrder string `json:"sort_order"`
 	Page      int    `json:"page"`

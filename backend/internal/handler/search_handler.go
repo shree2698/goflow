@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/shree2698/goflow/backend/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/handler/middleware"
 	"github.com/shree2698/goflow/backend/pkg/response"
 )
 
@@ -21,11 +23,17 @@ func (h *SearchHandler) SearchTasks(w http.ResponseWriter, r *http.Request) {
 	page, _ := strconv.Atoi(q.Get("page"))
 	limit, _ := strconv.Atoi(q.Get("limit"))
 
+	var userIDStr string
+	if userID, ok := r.Context().Value(middleware.UserIDKey).(uuid.UUID); ok {
+		userIDStr = userID.String()
+	}
+
 	params := domain.SearchParams{
 		Query:     q.Get("q"),
 		Status:    q.Get("status"),
 		Priority:  q.Get("priority"),
 		ProjectID: q.Get("project_id"),
+		UserID:    userIDStr,
 		SortBy:    q.Get("sort_by"),
 		SortOrder: q.Get("sort_order"),
 		Page:      page,

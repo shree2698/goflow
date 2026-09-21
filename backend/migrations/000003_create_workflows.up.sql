@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS workflows (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    creator_id UUID NOT NULL REFERENCES users(id),
+    creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
     name VARCHAR(255) NOT NULL,
     trigger_type VARCHAR(100) NOT NULL,
     conditions JSONB NOT NULL DEFAULT '[]',

@@ -25,9 +25,15 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 	}
 	offset := (params.Page - 1) * params.Limit
 
-	whereClause := "WHERE 1=1"
+	whereClause := "WHERE deleted_at IS NULL"
 	args := []interface{}{}
 	argIdx := 1
+
+	if params.UserID != "" {
+		whereClause += fmt.Sprintf(" AND project_id IN (SELECT project_id FROM project_members WHERE user_id = $%d)", argIdx)
+		args = append(args, params.UserID)
+		argIdx++
+	}
 
 	if params.Query != "" {
 		whereClause += fmt.Sprintf(" AND (title ILIKE $%d OR description ILIKE $%d)", argIdx, argIdx)

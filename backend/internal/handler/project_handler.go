@@ -213,7 +213,7 @@ func (h *ProjectHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		Description: req.Description,
 		Status:      domain.TaskStatus(req.Status),
 		Priority:    domain.TaskPriority(req.Priority),
-		CreatorID:   userID,
+		CreatorID:   &userID,
 		AssigneeID:  assigneeUUID,
 		Tags:        req.Tags,
 	}
