@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Bell, CheckCheck } from "lucide-react";
+import { Bell, CheckCheck, X } from "lucide-react";
 import { Notification } from "@/types/notification";
 import { apiClient } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
@@ -68,22 +68,32 @@ export const NotificationBell: React.FC = () => {
       {isOpen && (
         <>
           {/* Backdrop for mobile dismiss */}
-          <div 
-            className="fixed inset-0 z-40 sm:hidden" 
+          <div
+            className="fixed inset-0 z-40 sm:hidden"
             onClick={() => setIsOpen(false)}
           />
           <div className="fixed sm:absolute right-3 sm:right-0 top-16 sm:top-auto sm:mt-2 w-[calc(100vw-1.5rem)] sm:w-80 md:w-96 max-w-sm bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden">
             <div className="p-3 border-b border-border flex items-center justify-between bg-canvas">
               <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
+              <div className="flex items-center gap-2">
+                <button onClick={() => { setNotifications([]) }} className="text-xs text-accent hover:underline flex items-center gap-1">
+                  Clear all
+                </button>
+                <button onClick={() => setIsOpen(false)}
                   className="text-xs text-accent hover:underline flex items-center gap-1"
                 >
-                  <CheckCheck size={14} />
-                  Mark all read
+                  <X size={14} />
                 </button>
-              )}
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-accent hover:underline flex items-center gap-1"
+                  >
+                    <CheckCheck size={14} />
+                    Mark all read
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="max-h-80 overflow-y-auto divide-y divide-border">
@@ -95,9 +105,8 @@ export const NotificationBell: React.FC = () => {
                 notifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`p-3 text-sm flex gap-3 transition-colors ${
-                      n.is_read ? "opacity-70 bg-card" : "bg-card/40 font-medium"
-                    } hover:bg-hover`}
+                    className={`p-3 text-sm flex gap-3 transition-colors ${n.is_read ? "opacity-70 bg-card" : "bg-card/40 font-medium"
+                      } hover:bg-hover`}
                   >
                     <div className="flex-1">
                       <div className="flex items-center justify-between">

@@ -49,4 +49,22 @@ describe('AuthStore', () => {
     expect(state.refreshToken).toBeNull();
     expect(state.isAuthenticated).toBe(false);
   });
+
+  it('updates user properties on updateUser', () => {
+    const mockUser = {
+      id: 'user-123',
+      email: 'test@goflow.com',
+      full_name: 'Test User',
+      role: 'developer',
+    };
+
+    useAuthStore.getState().setAuth(mockUser, 'token-123');
+    useAuthStore.getState().updateUser({ full_name: 'Updated Name', timezone: 'UTC' });
+
+    const state = useAuthStore.getState();
+    expect(state.user?.full_name).toBe('Updated Name');
+    expect(state.user?.timezone).toBe('UTC');
+    expect(state.user?.email).toBe('test@goflow.com');
+    expect(state.accessToken).toBe('token-123');
+  });
 });

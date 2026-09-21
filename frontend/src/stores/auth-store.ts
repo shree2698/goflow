@@ -17,6 +17,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   hasHydrated: boolean;
   setAuth: (user: User, accessToken: string, refreshToken?: string) => void;
+  updateUser: (updatedUser: Partial<User>) => void;
   clearAuth: () => void;
   setHasHydrated: (state: boolean) => void;
 }
@@ -35,6 +36,10 @@ export const useAuthStore = create<AuthState>()(
           accessToken,
           refreshToken: refreshToken !== undefined ? refreshToken : state.refreshToken,
           isAuthenticated: true,
+        })),
+      updateUser: (updatedUser) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...updatedUser } : null,
         })),
       clearAuth: () =>
         set({

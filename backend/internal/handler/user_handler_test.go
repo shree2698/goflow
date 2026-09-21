@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shree2698/goflow/backend/internal/domain"
 	"github.com/shree2698/goflow/backend/internal/handler/middleware"
+	"github.com/shree2698/goflow/backend/pkg/crypto"
 )
 
 type mockUserRepo struct {
@@ -186,3 +187,68 @@ func TestUserHandler_DeleteUser(t *testing.T) {
 		t.Error("expected user to be deleted from repo, but user still found")
 	}
 }
+
+func TestUserHandler_UpdateMe(t *testing.T) {
+	repo := newMockUserRepo()
+	handler := NewUserHandler(repo)
+
+	hashed, _ := crypto.HashPassword("OldPass123!")
+	user := &domain.User{
+		ID:           uuid.New(),
+		Email:        "profile@example.com",
+		PasswordHash: hashed,
+		FullName:     "Original Name",
+		Role:         "employee",
+		Timezone:     "UTC",
+	}
+	_ = repo.Create(user)
+
+	t.Run("successful profile update and password change", func(t *testing.T) {
+		newName := "Updated Name"
+		oldPass := "OldPass123!"
+		newPass := "NewPass456!"
+		body := map[string]interface{}{
+			"full_name":        newName,
+			"current_password": oldPass,
+			"new_password":     newPass,
+		}
+		jsonBytes, _ := json.Marshal(body)
+
+		req := httptest.NewRequest("PATCH", "/api/v1/users/me", bytes.NewReader(jsonBytes))
+		ctx := context.WithValue(req.Context(), middleware.UserIDKey, user.ID)
+		rr := httptest.NewRecorder()
+
+		handler.UpdateMe(rr, req.WithContext(ctx))
+
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected 200 OK, got %d (body: %s)", rr.Code, rr.Body.String())
+		}
+
+		updated, _ := repo.GetByID(user.ID)
+		if updated.FullName != newName {
+			t.Errorf("expected full name %s, got %s", newName, updated.FullName)
+		}
+		if !crypto.CheckPasswordHash(newPass, updated.PasswordHash) {
+			t.Errorf("expected new password to match hash")
+		}
+	})
+
+	t.Run("fails when current password is incorrect", func(t *testing.T) {
+		body := map[string]interface{}{
+			"current_password": "WrongPassword!",
+			"new_password":     "NewPass456!",
+		}
+		jsonBytes, _ := json.Marshal(body)
+
+		req := httptest.NewRequest("PATCH", "/api/v1/users/me", bytes.NewReader(jsonBytes))
+		ctx := context.WithValue(req.Context(), middleware.UserIDKey, user.ID)
+		rr := httptest.NewRecorder()
+
+		handler.UpdateMe(rr, req.WithContext(ctx))
+
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 Bad Request, got %d", rr.Code)
+		}
+	})
+}
+

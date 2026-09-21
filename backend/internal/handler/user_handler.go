@@ -62,9 +62,11 @@ func (h *UserHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		FullName  *string `json:"full_name"`
-		AvatarURL *string `json:"avatar_url"`
-		Timezone  *string `json:"timezone"`
+		FullName        *string `json:"full_name"`
+		AvatarURL       *string `json:"avatar_url"`
+		Timezone        *string `json:"timezone"`
+		CurrentPassword *string `json:"current_password"`
+		NewPassword     *string `json:"new_password"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -80,6 +82,45 @@ func (h *UserHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Timezone != nil {
 		user.Timezone = *req.Timezone
+	}
+
+	if req.NewPassword != nil && *req.NewPassword != "" {
+		if req.CurrentPassword == nil || *req.CurrentPassword == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Current password is required to change password",
+				"error":   map[string]string{"message": "Current password is required to change password"},
+			})
+			return
+		}
+		if !crypto.CheckPasswordHash(*req.CurrentPassword, user.PasswordHash) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Current password is incorrect",
+				"error":   map[string]string{"message": "Current password is incorrect"},
+			})
+			return
+		}
+		if len(*req.NewPassword) < 6 {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "New password must be at least 6 characters long",
+				"error":   map[string]string{"message": "New password must be at least 6 characters long"},
+			})
+			return
+		}
+		hashedPassword, err := crypto.HashPassword(*req.NewPassword)
+		if err != nil {
+			http.Error(w, "Failed to process new password", http.StatusInternalServerError)
+			return
+		}
+		user.PasswordHash = hashedPassword
 	}
 
 	if err := h.userRepo.Update(user); err != nil {
