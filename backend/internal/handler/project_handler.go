@@ -59,7 +59,7 @@ func (h *ProjectHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
 	user, err := h.userRepo.GetByID(userID)
 	if err == nil && user != nil && user.Role == "admin" {
 		// Admin sees all projects
-		projects, err := h.projectRepo.ListByUser(r.Context(), userID)
+		projects, err := h.projectRepo.ListAll(r.Context())
 		if err != nil {
 			response.Error(w, err)
 			return
@@ -68,6 +68,7 @@ func (h *ProjectHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Employees see only assigned projects
 	projects, err := h.projectRepo.ListByUser(r.Context(), userID)
 	if err != nil {
 		response.Error(w, err)
@@ -78,11 +79,27 @@ func (h *ProjectHandler) ListProjects(w http.ResponseWriter, r *http.Request) {
 
 // GetProject handles GET /api/v1/projects/{id}
 func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.Error(w, domain.ErrUnauthorized)
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		response.Error(w, domain.NewBadRequest("Invalid project ID"))
 		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		// Non-admin users can only access projects assigned to them
+		_, err := h.projectRepo.GetMemberRole(r.Context(), id, userID)
+		if err != nil {
+			response.Error(w, domain.ErrForbidden)
+			return
+		}
 	}
 
 	project, err := h.projectRepo.GetByID(r.Context(), id)
@@ -147,11 +164,27 @@ func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 
 // ListTasks handles GET /api/v1/projects/{id}/tasks
 func (h *ProjectHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.Error(w, domain.ErrUnauthorized)
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	projectID, err := uuid.Parse(idStr)
 	if err != nil {
 		response.Error(w, domain.NewBadRequest("Invalid project ID"))
 		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		// Non-admin users can only access tasks for projects assigned to them
+		_, err := h.projectRepo.GetMemberRole(r.Context(), projectID, userID)
+		if err != nil {
+			response.Error(w, domain.ErrForbidden)
+			return
+		}
 	}
 
 	tasks, err := h.taskRepo.ListByProject(r.Context(), projectID)
@@ -176,6 +209,16 @@ func (h *ProjectHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		response.Error(w, domain.NewBadRequest("Invalid project ID"))
 		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		// Non-admin users can only create tasks in projects assigned to them
+		_, err := h.projectRepo.GetMemberRole(r.Context(), projectID, userID)
+		if err != nil {
+			response.Error(w, domain.ErrForbidden)
+			return
+		}
 	}
 
 	var req struct {
@@ -248,11 +291,32 @@ func (h *ProjectHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 // UpdateTask handles PATCH /api/v1/tasks/{id}
 func (h *ProjectHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.Error(w, domain.ErrUnauthorized)
+		return
+	}
+
 	taskIDStr := chi.URLParam(r, "id")
 	taskID, err := uuid.Parse(taskIDStr)
 	if err != nil {
 		response.Error(w, domain.NewBadRequest("Invalid task ID"))
 		return
+	}
+
+	task, err := h.taskRepo.GetByID(r.Context(), taskID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		_, err := h.projectRepo.GetMemberRole(r.Context(), task.ProjectID, userID)
+		if err != nil {
+			response.Error(w, domain.ErrForbidden)
+			return
+		}
 	}
 
 	var req struct {
@@ -265,12 +329,6 @@ func (h *ProjectHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		response.Error(w, domain.NewBadRequest("Invalid request body"))
-		return
-	}
-
-	task, err := h.taskRepo.GetByID(r.Context(), taskID)
-	if err != nil {
-		response.Error(w, err)
 		return
 	}
 
@@ -326,6 +384,12 @@ func (h *ProjectHandler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 // DeleteTask handles DELETE /api/v1/tasks/{id}
 func (h *ProjectHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	userID, err := getUserID(r)
+	if err != nil {
+		response.Error(w, domain.ErrUnauthorized)
+		return
+	}
+
 	taskIDStr := chi.URLParam(r, "id")
 	taskID, err := uuid.Parse(taskIDStr)
 	if err != nil {
@@ -333,7 +397,20 @@ func (h *ProjectHandler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task, _ := h.taskRepo.GetByID(r.Context(), taskID)
+	task, err := h.taskRepo.GetByID(r.Context(), taskID)
+	if err != nil {
+		response.Error(w, err)
+		return
+	}
+
+	user, _ := h.userRepo.GetByID(userID)
+	if user == nil || user.Role != "admin" {
+		_, err := h.projectRepo.GetMemberRole(r.Context(), task.ProjectID, userID)
+		if err != nil {
+			response.Error(w, domain.ErrForbidden)
+			return
+		}
+	}
 
 	if err := h.taskRepo.Delete(r.Context(), taskID); err != nil {
 		response.Error(w, err)

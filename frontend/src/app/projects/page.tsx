@@ -6,6 +6,8 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiClient } from "@/lib/api-client";
 import { Plus, FolderKanban, Loader2 } from "lucide-react";
 
+import { useAuthStore } from "@/stores/auth-store";
+
 interface Project {
   id: string;
   name: string;
@@ -15,6 +17,8 @@ interface Project {
 }
 
 export default function ProjectsPage() {
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === "admin";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,18 +46,24 @@ export default function ProjectsPage() {
       <div className="space-y-6 max-w-7xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Projects</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+              {isAdmin ? "Projects" : "My Assigned Projects"}
+            </h1>
             <p className="text-xs sm:text-sm text-foreground-secondary mt-1">
-              Manage your workspaces, tasks, and project workflows
+              {isAdmin
+                ? "Manage your workspaces, tasks, and project workflows"
+                : "Projects and task boards assigned to you"}
             </p>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-gradient-to-r from-accent to-lavender text-white px-5 py-2.5 rounded-xl shadow-neu-btn hover:opacity-95 active:shadow-neu-btn-active transition-all text-sm font-semibold min-h-[44px] shrink-0 self-start sm:self-auto w-full sm:w-auto"
-          >
-            <Plus size={18} />
-            <span>Create Project</span>
-          </button>
+          {isAdmin && (
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-accent to-lavender text-white px-5 py-2.5 rounded-xl shadow-neu-btn hover:opacity-95 active:shadow-neu-btn-active transition-all text-sm font-semibold min-h-[44px] shrink-0 self-start sm:self-auto w-full sm:w-auto"
+            >
+              <Plus size={18} />
+              <span>Create Project</span>
+            </button>
+          )}
         </div>
 
         {error && (
@@ -69,8 +79,14 @@ export default function ProjectsPage() {
         ) : projects.length === 0 ? (
           <div className="text-center p-12 bg-canvas rounded-2xl border border-dashed border-border shadow-neu-flat">
             <FolderKanban className="mx-auto text-foreground-secondary mb-3" size={40} />
-            <h3 className="text-base font-semibold text-foreground">No projects found</h3>
-            <p className="text-xs text-foreground-secondary mt-1">Get started by creating your first project</p>
+            <h3 className="text-base font-semibold text-foreground">
+              {isAdmin ? "No projects found" : "No assigned projects"}
+            </h3>
+            <p className="text-xs text-foreground-secondary mt-1">
+              {isAdmin
+                ? "Get started by creating your first project"
+                : "You will see projects here once an administrator assigns you to a project workspace"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -94,7 +110,7 @@ export default function ProjectsPage() {
                     </p>
                   </div>
                   <div className="mt-5 pt-4 border-t border-border/50 flex items-center justify-between text-xs text-foreground-secondary">
-                    <span className="font-medium text-foreground-secondary">Active Kanban</span>
+                    <span className="font-medium text-foreground-secondary">Active</span>
                     <span className="text-accent font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1">
                       Open Board →
                     </span>

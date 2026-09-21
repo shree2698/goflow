@@ -5,6 +5,8 @@ import { CheckCircle2, Clock, AlertTriangle, Ban, BarChart3, TrendingUp, Loader2
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiClient } from "@/lib/api-client";
 
+import { useAuthStore } from "@/stores/auth-store";
+
 interface Summary {
   total_tasks: number;
   completed_tasks: number;
@@ -32,12 +34,15 @@ interface ProductivityMetrics {
 }
 
 export default function DashboardPage() {
+  const user = useAuthStore((state) => state.user);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [projects, setProjects] = useState<ProjectAnalytics[]>([]);
   const [productivity, setProductivity] = useState<ProductivityMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user?.role && user.role !== "admin") return;
+
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
@@ -58,7 +63,7 @@ export default function DashboardPage() {
     };
 
     fetchAnalytics();
-  }, []);
+  }, [user]);
 
   const stats = [
     { 
@@ -76,7 +81,7 @@ export default function DashboardPage() {
       bg: "bg-emerald-500/15" 
     },
     { 
-      label: "Pending", 
+      label: "In Progress", 
       value: summary ? String(summary.pending_tasks) : "0", 
       icon: Clock, 
       color: "text-lavender", 
@@ -99,7 +104,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["admin"]}>
       <div className="space-y-6 max-w-7xl mx-auto w-full">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">Dashboard & Analytics</h1>

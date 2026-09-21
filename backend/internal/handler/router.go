@@ -104,6 +104,7 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 
 		r.Route("/analytics", func(r chi.Router) {
 			r.Use(middleware.RequireAuth(jwtService))
+			r.Use(middleware.RequireRole(userRepo, "admin"))
 			r.Get("/summary", analyticsHandler.GetSummary)
 			r.Get("/projects", analyticsHandler.GetProjects)
 			r.Get("/productivity", analyticsHandler.GetProductivity)

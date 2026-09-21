@@ -5,7 +5,7 @@ import WorkflowBuilderModal from "@/components/workflows/WorkflowBuilderModal";
 import ExecutionHistory from "@/components/workflows/ExecutionHistory";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiClient } from "@/lib/api-client";
-import { Plus, ArrowLeft, Zap, Loader2 } from "lucide-react";
+import { Plus, ArrowLeft, Zap, Loader2, AlertTriangle } from "lucide-react";
 
 interface Workflow {
   id: string;
@@ -17,14 +17,21 @@ interface Workflow {
 export default function WorkflowsPage({ params }: { params: { id: string } }) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessError, setAccessError] = useState<string | null>(null);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'RULES' | 'HISTORY'>('RULES');
 
   const loadWorkflows = async () => {
     setLoading(true);
+    setAccessError(null);
     try {
-      const res = await apiClient.get<any[]>(`/projects/${params.id}/workflows`);
-      if (res.data) {
+      const res = await apiClient.get<any[]>(`/projects/${params.id}/workflows`).catch((err: any) => {
+        if (err?.error?.code === "FORBIDDEN" || err?.status === 403) {
+          setAccessError("You do not have access to this project workflows. Employees can only access projects assigned to them.");
+        }
+        return null;
+      });
+      if (res?.data) {
         const formatted: Workflow[] = res.data.map((w: any) => ({
           id: w.id,
           name: w.name,
@@ -69,6 +76,30 @@ export default function WorkflowsPage({ params }: { params: { id: string } }) {
       setIsBuilderOpen(false);
     }
   };
+
+  if (accessError && !loading) {
+    return (
+      <ProtectedRoute>
+        <div className="max-w-md mx-auto my-16 text-center p-8 bg-canvas rounded-3xl shadow-neu-flat border border-border/60">
+          <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center mx-auto mb-4 shadow-neu-flat-sm">
+            <AlertTriangle size={28} />
+          </div>
+          <h2 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">Access Restricted</h2>
+          <p className="text-xs sm:text-sm text-foreground-secondary mt-2 leading-relaxed">
+            {accessError}
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/projects"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent text-white shadow-neu-btn text-xs sm:text-sm font-semibold hover:bg-accent-hover transition-all"
+            >
+              <ArrowLeft size={16} /> Back to My Projects
+            </Link>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>

@@ -27,7 +27,11 @@ export default function RegisterPage() {
     try {
       const res = await apiClient.post<{ user: any; tokens: { access_token: string; refresh_token: string } }>("/auth/register", formData);
       setAuth(res.data.user, res.data.tokens.access_token, res.data.tokens.refresh_token);
-      router.push("/dashboard");
+      if (res.data.user?.role === "admin") {
+        router.push("/dashboard");
+      } else {
+        router.push("/projects");
+      }
     } catch (err: any) {
       setError(err.error?.message || "An error occurred during registration.");
     } finally {

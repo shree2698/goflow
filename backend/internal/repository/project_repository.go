@@ -15,6 +15,7 @@ type ProjectRepository interface {
 	Create(ctx context.Context, project *domain.Project) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Project, error)
 	ListByUser(ctx context.Context, userID uuid.UUID) ([]domain.Project, error)
+	ListAll(ctx context.Context) ([]domain.Project, error)
 	Update(ctx context.Context, project *domain.Project) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	AddMember(ctx context.Context, member *domain.ProjectMember) error
@@ -71,6 +72,30 @@ func (r *projectRepository) ListByUser(ctx context.Context, userID uuid.UUID) ([
 		ORDER BY p.updated_at DESC
 	`
 	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var projects []domain.Project
+	for rows.Next() {
+		var p domain.Project
+		if err := rows.Scan(&p.ID, &p.Name, &p.Description, &p.Color, &p.Status, &p.OwnerID, &p.CreatedAt, &p.UpdatedAt, &p.DeletedAt); err != nil {
+			return nil, err
+		}
+		projects = append(projects, p)
+	}
+	return projects, nil
+}
+
+func (r *projectRepository) ListAll(ctx context.Context) ([]domain.Project, error) {
+	query := `
+		SELECT p.id, p.name, p.description, p.color, p.status, p.owner_id, p.created_at, p.updated_at, p.deleted_at
+		FROM projects p
+		WHERE p.deleted_at IS NULL
+		ORDER BY p.updated_at DESC
+	`
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}

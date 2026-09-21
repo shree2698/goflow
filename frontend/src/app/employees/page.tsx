@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { apiClient } from "@/lib/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 import { UserPlus, Edit2, Trash2, Shield, User, Key, X, CheckCircle } from "lucide-react";
 
 interface Employee {
@@ -14,6 +15,7 @@ interface Employee {
 }
 
 export default function EmployeesPage() {
+  const user = useAuthStore((state) => state.user);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,8 +47,10 @@ export default function EmployeesPage() {
   };
 
   useEffect(() => {
-    loadEmployees();
-  }, []);
+    if (user?.role === "admin") {
+      loadEmployees();
+    }
+  }, [user]);
 
   const openCreateModal = () => {
     setEditingEmployee(null);
@@ -111,7 +115,7 @@ export default function EmployeesPage() {
   };
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["admin"]}>
       <div className="space-y-6 max-w-7xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

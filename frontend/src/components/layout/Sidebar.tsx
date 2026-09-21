@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, FolderKanban, Users, X } from "lucide-react";
 
+import { useAuthStore } from "@/stores/auth-store";
+
 interface SidebarProps {
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
@@ -15,6 +17,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
 }) => {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.role === "admin";
 
   const isActive = (path: string) => {
     if (path === "/dashboard" && pathname === "/dashboard") return true;
@@ -47,18 +51,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         <nav className="space-y-3">
-          <Link
-            href="/dashboard"
-            onClick={onCloseMobile}
-            className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
-              isActive("/dashboard")
-                ? "shadow-neu-pressed text-accent font-semibold bg-canvas"
-                : "text-foreground-secondary hover:text-foreground hover:shadow-neu-btn bg-canvas"
-            }`}
-          >
-            <LayoutDashboard size={18} className={isActive("/dashboard") ? "text-accent" : "text-lavender"} />
-            <span>Dashboard</span>
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/dashboard"
+              onClick={onCloseMobile}
+              className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                isActive("/dashboard")
+                  ? "shadow-neu-pressed text-accent font-semibold bg-canvas"
+                  : "text-foreground-secondary hover:text-foreground hover:shadow-neu-btn bg-canvas"
+              }`}
+            >
+              <LayoutDashboard size={18} className={isActive("/dashboard") ? "text-accent" : "text-lavender"} />
+              <span>Dashboard</span>
+            </Link>
+          )}
 
           <Link
             href="/projects"
@@ -70,21 +76,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
             }`}
           >
             <FolderKanban size={18} className={pathname.startsWith("/projects") ? "text-accent" : "text-lavender"} />
-            <span>Projects</span>
+            <span>{isAdmin ? "Projects" : "My Assigned Projects"}</span>
           </Link>
 
-          <Link
-            href="/employees"
-            onClick={onCloseMobile}
-            className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
-              isActive("/employees")
-                ? "shadow-neu-pressed text-accent font-semibold bg-canvas"
-                : "text-foreground-secondary hover:text-foreground hover:shadow-neu-btn bg-canvas"
-            }`}
-          >
-            <Users size={18} className={isActive("/employees") ? "text-accent" : "text-lavender"} />
-            <span>Employees Control</span>
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/employees"
+              onClick={onCloseMobile}
+              className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] ${
+                isActive("/employees")
+                  ? "shadow-neu-pressed text-accent font-semibold bg-canvas"
+                  : "text-foreground-secondary hover:text-foreground hover:shadow-neu-btn bg-canvas"
+              }`}
+            >
+              <Users size={18} className={isActive("/employees") ? "text-accent" : "text-lavender"} />
+              <span>Employees Control</span>
+            </Link>
+          )}
         </nav>
       </div>
 

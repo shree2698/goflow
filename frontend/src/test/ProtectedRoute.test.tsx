@@ -68,4 +68,48 @@ describe('ProtectedRoute Component', () => {
     expect(screen.getByText('Secret Content')).toBeInTheDocument();
     expect(mockPush).not.toHaveBeenCalled();
   });
+
+  it('redirects employee to /projects when allowedRoles requires admin', () => {
+    useAuthStore.setState({
+      hasHydrated: true,
+      isAuthenticated: true,
+      user: {
+        id: 'user-456',
+        email: 'emp@example.com',
+        full_name: 'Regular Employee',
+        role: 'employee',
+      },
+    });
+
+    render(
+      <ProtectedRoute allowedRoles={['admin']}>
+        <div>Admin Only Module</div>
+      </ProtectedRoute>
+    );
+
+    expect(screen.queryByText('Admin Only Module')).not.toBeInTheDocument();
+    expect(mockPush).toHaveBeenCalledWith('/projects');
+  });
+
+  it('allows access when user has the allowed role', () => {
+    useAuthStore.setState({
+      hasHydrated: true,
+      isAuthenticated: true,
+      user: {
+        id: 'admin-1',
+        email: 'admin@example.com',
+        full_name: 'Admin User',
+        role: 'admin',
+      },
+    });
+
+    render(
+      <ProtectedRoute allowedRoles={['admin']}>
+        <div>Admin Only Module</div>
+      </ProtectedRoute>
+    );
+
+    expect(screen.getByText('Admin Only Module')).toBeInTheDocument();
+    expect(mockPush).not.toHaveBeenCalled();
+  });
 });
