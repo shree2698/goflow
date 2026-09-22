@@ -36,7 +36,9 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 		whereClause += fmt.Sprintf(" AND project_id IN (SELECT project_id FROM project_members WHERE user_id = $%d)", argIdx)
 		args = append(args, params.UserID)
 		argIdx++
-	}	var queryEmbedding []float32
+	}
+
+	var queryEmbedding []float32
 	var isSemantic bool
 
 	if params.Query != "" {
@@ -93,6 +95,19 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 		sortOrder = "ASC"
 	}
 
+	if isSemantic {
+		embStrs := make([]string, len(queryEmbedding))
+		for i, v := range queryEmbedding {
+			embStrs[i] = fmt.Sprintf("%f", v)
+		}
+		vectorStr := "[" + strings.Join(embStrs, ",") + "]"
+
+		sortCol = fmt.Sprintf("task_embedding <-> $%d", argIdx)
+		sortOrder = ""
+		args = append(args, vectorStr)
+		argIdx++
+	}
+
 	query := fmt.Sprintf(`
 		SELECT id, project_id, title, description, status, priority, due_date, created_at, updated_at
 		FROM tasks
@@ -127,7 +142,9 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 			"created_at":  createdAt,
 			"updated_at":  updatedAt,
 		})
-	}	totalPages := int((total + int64(params.Limit) - 1) / int64(params.Limit))
+	}
+
+	totalPages := int((total + int64(params.Limit) - 1) / int64(params.Limit))
 
 	var aiAnswer string
 	if isSemantic && len(tasks) > 0 {
