@@ -19,6 +19,7 @@ type EmployeeSeed struct {
 	Password string
 	FullName string
 	Role     string
+	Timezone string
 }
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	log := logger.New(cfg.Server.Env)
-	log.Info().Msg("Starting full database seed (migrations, users, projects, tasks, workflows, notifications)...")
+	log.Info().Msg("Starting full database seed (migrations, 10 employees, active/inactive projects, access controls, tasks, workflows, notifications)...")
 
 	db, err := config.NewPostgresPool(cfg.Database, log)
 	if err != nil {
@@ -45,26 +46,85 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to run database migrations")
 	}
 
-	// 2. Seed Users
-	log.Info().Msg("Step 2: Seeding users...")
+	// 2. Seed 10 Employees (+ 1 Admin)
+	log.Info().Msg("Step 2: Seeding users (Admin + 10 Employees)...")
 	employees := []EmployeeSeed{
 		{
 			Email:    "admin@goflow.com",
 			Password: "Password123!",
 			FullName: "System Administrator",
 			Role:     "admin",
+			Timezone: "UTC",
 		},
 		{
 			Email:    "employee1@goflow.com",
 			Password: "Password123!",
 			FullName: "Alice Smith",
 			Role:     "employee",
+			Timezone: "America/New_York",
 		},
 		{
 			Email:    "employee2@goflow.com",
 			Password: "Password123!",
 			FullName: "Bob Jones",
 			Role:     "employee",
+			Timezone: "America/Chicago",
+		},
+		{
+			Email:    "employee3@goflow.com",
+			Password: "Password123!",
+			FullName: "Charlie Brown",
+			Role:     "employee",
+			Timezone: "America/Los_Angeles",
+		},
+		{
+			Email:    "employee4@goflow.com",
+			Password: "Password123!",
+			FullName: "Diana Prince",
+			Role:     "employee",
+			Timezone: "Europe/London",
+		},
+		{
+			Email:    "employee5@goflow.com",
+			Password: "Password123!",
+			FullName: "Ethan Hunt",
+			Role:     "employee",
+			Timezone: "Europe/Berlin",
+		},
+		{
+			Email:    "employee6@goflow.com",
+			Password: "Password123!",
+			FullName: "Fiona Gallagher",
+			Role:     "employee",
+			Timezone: "America/Toronto",
+		},
+		{
+			Email:    "employee7@goflow.com",
+			Password: "Password123!",
+			FullName: "George Clark",
+			Role:     "employee",
+			Timezone: "Asia/Singapore",
+		},
+		{
+			Email:    "employee8@goflow.com",
+			Password: "Password123!",
+			FullName: "Hannah Abbott",
+			Role:     "employee",
+			Timezone: "Asia/Tokyo",
+		},
+		{
+			Email:    "employee9@goflow.com",
+			Password: "Password123!",
+			FullName: "Ian Malcolm",
+			Role:     "employee",
+			Timezone: "Australia/Sydney",
+		},
+		{
+			Email:    "employee10@goflow.com",
+			Password: "Password123!",
+			FullName: "Julia Roberts",
+			Role:     "employee",
+			Timezone: "America/Denver",
 		},
 	}
 
@@ -79,12 +139,12 @@ func main() {
 		var userID uuid.UUID
 		query := `
 			INSERT INTO users (email, password_hash, full_name, role, timezone)
-			VALUES ($1, $2, $3, $4, 'UTC')
+			VALUES ($1, $2, $3, $4, $5)
 			ON CONFLICT (email) DO UPDATE 
-			SET password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name, role = EXCLUDED.role
+			SET password_hash = EXCLUDED.password_hash, full_name = EXCLUDED.full_name, role = EXCLUDED.role, timezone = EXCLUDED.timezone
 			RETURNING id;
 		`
-		err = db.QueryRow(ctx, query, emp.Email, hash, emp.FullName, emp.Role).Scan(&userID)
+		err = db.QueryRow(ctx, query, emp.Email, hash, emp.FullName, emp.Role, emp.Timezone).Scan(&userID)
 		if err != nil {
 			log.Error().Err(err).Str("email", emp.Email).Msg("Failed to upsert user")
 			continue
@@ -96,60 +156,167 @@ func main() {
 	adminID := userIDs["admin@goflow.com"]
 	aliceID := userIDs["employee1@goflow.com"]
 	bobID := userIDs["employee2@goflow.com"]
+	charlieID := userIDs["employee3@goflow.com"]
+	dianaID := userIDs["employee4@goflow.com"]
+	ethanID := userIDs["employee5@goflow.com"]
+	fionaID := userIDs["employee6@goflow.com"]
+	georgeID := userIDs["employee7@goflow.com"]
+	hannahID := userIDs["employee8@goflow.com"]
+	ianID := userIDs["employee9@goflow.com"]
+	juliaID := userIDs["employee10@goflow.com"]
 
-	// 3. Seed Projects
-	log.Info().Msg("Step 3: Seeding projects & members...")
+	// 3. Seed Projects (Active & Inactive) with Access Matrix
+	log.Info().Msg("Step 3: Seeding active & inactive projects and employee accesses...")
+	type ProjectMemberDef struct {
+		UserID uuid.UUID
+		Role   string
+	}
+
 	type ProjectDef struct {
 		Name        string
 		Description string
 		Color       string
+		Status      string
 		OwnerID     uuid.UUID
-		Members     []struct {
-			UserID uuid.UUID
-			Role   string
-		}
+		Members     []ProjectMemberDef
 	}
 
 	projects := []ProjectDef{
+		// Active Projects
 		{
 			Name:        "Core Platform & API",
-			Description: "Core backend services, database schema, Redis worker queue, and REST APIs.",
+			Description: "Core backend services, database schema, Redis worker queue, and high-performance REST APIs.",
 			Color:       "#6366F1",
+			Status:      "active",
 			OwnerID:     adminID,
-			Members: []struct {
-				UserID uuid.UUID
-				Role   string
-			}{
+			Members: []ProjectMemberDef{
 				{UserID: adminID, Role: "OWNER"},
 				{UserID: aliceID, Role: "ADMIN"},
 				{UserID: bobID, Role: "MEMBER"},
+				{UserID: ianID, Role: "MEMBER"},
+				{UserID: hannahID, Role: "VIEWER"},
 			},
 		},
 		{
 			Name:        "Frontend Redesign",
 			Description: "Modernizing the user interface with Next.js 14, Tailwind CSS, and Neumorphic components.",
 			Color:       "#EC4899",
+			Status:      "active",
 			OwnerID:     aliceID,
-			Members: []struct {
-				UserID uuid.UUID
-				Role   string
-			}{
+			Members: []ProjectMemberDef{
 				{UserID: aliceID, Role: "OWNER"},
+				{UserID: charlieID, Role: "ADMIN"},
 				{UserID: adminID, Role: "ADMIN"},
 				{UserID: bobID, Role: "MEMBER"},
+				{UserID: juliaID, Role: "VIEWER"},
 			},
 		},
 		{
 			Name:        "Mobile Companion App",
 			Description: "Cross-platform mobile client for workflow alerts, task reviews, and offline sync.",
 			Color:       "#10B981",
-			OwnerID:     bobID,
-			Members: []struct {
-				UserID uuid.UUID
-				Role   string
-			}{
-				{UserID: bobID, Role: "OWNER"},
+			Status:      "active",
+			OwnerID:     georgeID,
+			Members: []ProjectMemberDef{
+				{UserID: georgeID, Role: "OWNER"},
+				{UserID: aliceID, Role: "ADMIN"},
+				{UserID: bobID, Role: "MEMBER"},
+				{UserID: ethanID, Role: "MEMBER"},
+				{UserID: adminID, Role: "VIEWER"},
+			},
+		},
+		{
+			Name:        "AI Workflow Automation",
+			Description: "Intelligent rule evaluator, LLM intent engine, and automated task execution assistant.",
+			Color:       "#8B5CF6",
+			Status:      "active",
+			OwnerID:     dianaID,
+			Members: []ProjectMemberDef{
+				{UserID: dianaID, Role: "OWNER"},
+				{UserID: aliceID, Role: "ADMIN"},
 				{UserID: adminID, Role: "ADMIN"},
+				{UserID: fionaID, Role: "MEMBER"},
+				{UserID: ethanID, Role: "MEMBER"},
+			},
+		},
+		{
+			Name:        "Customer Portal 2.0",
+			Description: "Self-service client dashboard, team onboarding wizard, and usage telemetry.",
+			Color:       "#06B6D4",
+			Status:      "active",
+			OwnerID:     juliaID,
+			Members: []ProjectMemberDef{
+				{UserID: juliaID, Role: "OWNER"},
+				{UserID: charlieID, Role: "ADMIN"},
+				{UserID: dianaID, Role: "MEMBER"},
+				{UserID: hannahID, Role: "VIEWER"},
+			},
+		},
+
+		// Inactive & Archived Projects
+		{
+			Name:        "Legacy Monolith Migration",
+			Description: "Decommissioned monolithic architecture repository and database after services split.",
+			Color:       "#64748B",
+			Status:      "inactive",
+			OwnerID:     bobID,
+			Members: []ProjectMemberDef{
+				{UserID: bobID, Role: "OWNER"},
+				{UserID: ianID, Role: "ADMIN"},
+				{UserID: aliceID, Role: "MEMBER"},
+				{UserID: adminID, Role: "VIEWER"},
+			},
+		},
+		{
+			Name:        "Q1 Marketing Landing Pages",
+			Description: "Completed promotional landing pages, SEO optimizations, and A/B campaign experiments.",
+			Color:       "#F59E0B",
+			Status:      "completed",
+			OwnerID:     charlieID,
+			Members: []ProjectMemberDef{
+				{UserID: charlieID, Role: "OWNER"},
+				{UserID: dianaID, Role: "ADMIN"},
+				{UserID: aliceID, Role: "MEMBER"},
+				{UserID: juliaID, Role: "VIEWER"},
+			},
+		},
+		{
+			Name:        "Security Audit & Compliance 2025",
+			Description: "SOC2 Type II penetration tests, automated vulnerability scans, and access control audit.",
+			Color:       "#EF4444",
+			Status:      "archived",
+			OwnerID:     hannahID,
+			Members: []ProjectMemberDef{
+				{UserID: hannahID, Role: "OWNER"},
+				{UserID: adminID, Role: "ADMIN"},
+				{UserID: bobID, Role: "MEMBER"},
+				{UserID: ianID, Role: "MEMBER"},
+			},
+		},
+		{
+			Name:        "Data Warehouse & BI Pipeline v1",
+			Description: "ClickHouse analytics ingestion and Metabase reporting pipelines (on hold pending cloud budget).",
+			Color:       "#6B7280",
+			Status:      "on_hold",
+			OwnerID:     fionaID,
+			Members: []ProjectMemberDef{
+				{UserID: fionaID, Role: "OWNER"},
+				{UserID: ianID, Role: "ADMIN"},
+				{UserID: dianaID, Role: "MEMBER"},
+				{UserID: ethanID, Role: "VIEWER"},
+			},
+		},
+		{
+			Name:        "Deprecated Kong API Gateway",
+			Description: "Previous generation Kong reverse proxy and custom Lua plugins, retired in favor of Envoy.",
+			Color:       "#94A3B8",
+			Status:      "inactive",
+			OwnerID:     ianID,
+			Members: []ProjectMemberDef{
+				{UserID: ianID, Role: "OWNER"},
+				{UserID: bobID, Role: "ADMIN"},
+				{UserID: hannahID, Role: "VIEWER"},
+				{UserID: adminID, Role: "VIEWER"},
 			},
 		},
 	}
@@ -162,17 +329,27 @@ func main() {
 			pID = uuid.New()
 			insertProj := `
 				INSERT INTO projects (id, name, description, color, status, owner_id, created_at, updated_at)
-				VALUES ($1, $2, $3, $4, 'active', $5, NOW(), NOW())
+				VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
 			`
-			if _, err := db.Exec(ctx, insertProj, pID, p.Name, p.Description, p.Color, p.OwnerID); err != nil {
+			if _, err := db.Exec(ctx, insertProj, pID, p.Name, p.Description, p.Color, p.Status, p.OwnerID); err != nil {
 				log.Error().Err(err).Str("project", p.Name).Msg("Failed to insert project")
 				continue
 			}
+		} else {
+			// Update status, description, color, owner_id if project exists
+			updateProj := `
+				UPDATE projects 
+				SET description = $1, color = $2, status = $3, owner_id = $4, updated_at = NOW()
+				WHERE id = $5
+			`
+			if _, err := db.Exec(ctx, updateProj, p.Description, p.Color, p.Status, p.OwnerID, pID); err != nil {
+				log.Error().Err(err).Str("project", p.Name).Msg("Failed to update project")
+			}
 		}
 		projectIDs[p.Name] = pID
-		log.Info().Str("project", p.Name).Str("id", pID.String()).Msg("Seeded project")
+		log.Info().Str("project", p.Name).Str("status", p.Status).Str("id", pID.String()).Msg("Seeded project")
 
-		// Add project members
+		// Add project members and their accesses
 		for _, m := range p.Members {
 			insertMember := `
 				INSERT INTO project_members (project_id, user_id, role, joined_at)
@@ -187,8 +364,14 @@ func main() {
 
 	coreProjID := projectIDs["Core Platform & API"]
 	frontProjID := projectIDs["Frontend Redesign"]
+	mobileProjID := projectIDs["Mobile Companion App"]
+	aiProjID := projectIDs["AI Workflow Automation"]
+	portalProjID := projectIDs["Customer Portal 2.0"]
+	legacyProjID := projectIDs["Legacy Monolith Migration"]
+	auditProjID := projectIDs["Security Audit & Compliance 2025"]
+	dwProjID := projectIDs["Data Warehouse & BI Pipeline v1"]
 
-	// 4. Seed Tasks
+	// 4. Seed Tasks across Active & Inactive Projects
 	log.Info().Msg("Step 4: Seeding tasks, subtasks & comments...")
 	now := time.Now()
 	type TaskDef struct {
@@ -222,6 +405,7 @@ func main() {
 	dueNext96h := now.Add(96 * time.Hour)
 
 	tasks := []TaskDef{
+		// Active: Core Platform & API
 		{
 			ProjectID:   coreProjID,
 			Title:       "Implement JWT Authentication & Refresh Flow",
@@ -313,21 +497,35 @@ func main() {
 		},
 		{
 			ProjectID:   coreProjID,
-			Title:       "Fix Redis connection timeout in staging",
-			Description: "Worker queue intermittent drops when network latency spikes.",
-			Status:      "BLOCKED",
-			Priority:    "urgent",
-			DueDate:     &duePast12h,
-			CreatorID:   bobID,
-			AssigneeID:  &bobID,
-			Tags:        []string{"Bug", "Infrastructure"},
-			Comments: []struct {
-				AuthorID uuid.UUID
-				Content  string
+			Title:       "Cloud Infrastructure Terraform Modules",
+			Description: "Provision AWS VPC, RDS Multi-AZ PostgreSQL cluster, and ElastiCache Redis replication group.",
+			Status:      "IN_PROGRESS",
+			Priority:    "high",
+			DueDate:     &dueNext96h,
+			CreatorID:   adminID,
+			AssigneeID:  &ianID,
+			Tags:        []string{"DevOps", "Terraform", "AWS"},
+			Subtasks: []struct {
+				Title     string
+				Completed bool
 			}{
-				{AuthorID: bobID, Content: "Waiting on DevOps team to check network firewall rule."},
+				{Title: "Write RDS module with automated backups", Completed: true},
+				{Title: "Configure security groups and IAM roles", Completed: false},
 			},
 		},
+		{
+			ProjectID:   coreProjID,
+			Title:       "RBAC Role Validation Middleware Audit",
+			Description: "Enforce strict ProjectRole permission checks on task deletions and workflow triggers.",
+			Status:      "TODO",
+			Priority:    "medium",
+			DueDate:     &dueNext72h,
+			CreatorID:   adminID,
+			AssigneeID:  &hannahID,
+			Tags:        []string{"Security", "RBAC"},
+		},
+
+		// Active: Frontend Redesign
 		{
 			ProjectID:   frontProjID,
 			Title:       "Build Interactive Kanban Board",
@@ -355,8 +553,14 @@ func main() {
 			Priority:    "medium",
 			DueDate:     &dueNext24h,
 			CreatorID:   aliceID,
-			AssigneeID:  &bobID,
+			AssigneeID:  &charlieID,
 			Tags:        []string{"Frontend", "UX"},
+			Comments: []struct {
+				AuthorID uuid.UUID
+				Content  string
+			}{
+				{AuthorID: charlieID, Content: "Added keyboard shortcut listeners and fuzzy search ranking."},
+			},
 		},
 		{
 			ProjectID:   frontProjID,
@@ -366,8 +570,145 @@ func main() {
 			Priority:    "medium",
 			DueDate:     &dueNext96h,
 			CreatorID:   aliceID,
-			AssigneeID:  &aliceID,
+			AssigneeID:  &charlieID,
 			Tags:        []string{"Frontend", "WebSocket"},
+		},
+
+		// Active: Mobile Companion App
+		{
+			ProjectID:   mobileProjID,
+			Title:       "Push Notification Listener & Offline Queue",
+			Description: "Handle APNs / FCM push notifications and queue local mutations when device is offline.",
+			Status:      "IN_PROGRESS",
+			Priority:    "high",
+			DueDate:     &dueNext48h,
+			CreatorID:   georgeID,
+			AssigneeID:  &georgeID,
+			Tags:        []string{"Mobile", "Notifications", "Offline"},
+		},
+		{
+			ProjectID:   mobileProjID,
+			Title:       "E2E Detox Automated Test Suite",
+			Description: "End-to-end testing pipeline for iOS simulator and Android emulator builds.",
+			Status:      "TODO",
+			Priority:    "medium",
+			DueDate:     &dueNext72h,
+			CreatorID:   georgeID,
+			AssigneeID:  &ethanID,
+			Tags:        []string{"QA", "Mobile", "Testing"},
+		},
+
+		// Active: AI Workflow Automation
+		{
+			ProjectID:   aiProjID,
+			Title:       "Implement Prompt Template Routing & LLM Fallback",
+			Description: "Dynamic routing between local evaluator models and remote OpenAI/Gemini providers.",
+			Status:      "IN_PROGRESS",
+			Priority:    "urgent",
+			DueDate:     &dueNext24h,
+			CreatorID:   dianaID,
+			AssigneeID:  &dianaID,
+			Tags:        []string{"AI", "LLM", "Orchestration"},
+			Comments: []struct {
+				AuthorID uuid.UUID
+				Content  string
+			}{
+				{AuthorID: dianaID, Content: "Local fallback is functional; latency is under 120ms."},
+			},
+		},
+		{
+			ProjectID:   aiProjID,
+			Title:       "Anomaly Detection on Workflow Failure Bursts",
+			Description: "Statistical monitoring to alert project owners if recurring workflow triggers fail consecutively.",
+			Status:      "TODO",
+			Priority:    "medium",
+			DueDate:     &dueNext96h,
+			CreatorID:   dianaID,
+			AssigneeID:  &fionaID,
+			Tags:        []string{"Analytics", "AI", "Alerts"},
+		},
+
+		// Active: Customer Portal 2.0
+		{
+			ProjectID:   portalProjID,
+			Title:       "Stripe Webhook Handlers for Subscription Lifecycle",
+			Description: "Support customer subscription creation, renewal events, and payment failure retries.",
+			Status:      "IN_PROGRESS",
+			Priority:    "high",
+			DueDate:     &dueNext48h,
+			CreatorID:   juliaID,
+			AssigneeID:  &juliaID,
+			Tags:        []string{"Billing", "Stripe", "Portal"},
+		},
+		{
+			ProjectID:   portalProjID,
+			Title:       "User Onboarding Step Wizard & Guided Tour",
+			Description: "Step-by-step product walkthrough introducing kanban boards and workflow triggers.",
+			Status:      "TODO",
+			Priority:    "low",
+			DueDate:     &dueNext96h,
+			CreatorID:   juliaID,
+			AssigneeID:  &charlieID,
+			Tags:        []string{"Onboarding", "UX"},
+		},
+
+		// Inactive: Legacy Monolith Migration
+		{
+			ProjectID:   legacyProjID,
+			Title:       "Final Database Snapshot & S3 Cold Storage Archive",
+			Description: "Verify all historical tables dumped and stored in encrypted S3 Glacier vault.",
+			Status:      "COMPLETED",
+			Priority:    "high",
+			DueDate:     &duePast72h,
+			CreatorID:   bobID,
+			AssigneeID:  &bobID,
+			Tags:        []string{"Migration", "Database", "Archived"},
+			CompletedAt: &duePast48h,
+		},
+		{
+			ProjectID:   legacyProjID,
+			Title:       "Drain Traffic & Decommission Monolith EC2 Clusters",
+			Description: "Shut down lingering web instances and release elastic IP addresses.",
+			Status:      "COMPLETED",
+			Priority:    "medium",
+			DueDate:     &duePast48h,
+			CreatorID:   bobID,
+			AssigneeID:  &ianID,
+			Tags:        []string{"Infra", "Decommission"},
+			CompletedAt: &duePast24h,
+		},
+
+		// Inactive: Security Audit & Compliance 2025
+		{
+			ProjectID:   auditProjID,
+			Title:       "Penetration Testing Remediation Report for SOC2",
+			Description: "Close out open CVE vulnerabilities and generate final executive compliance summary.",
+			Status:      "COMPLETED",
+			Priority:    "urgent",
+			DueDate:     &duePast48h,
+			CreatorID:   hannahID,
+			AssigneeID:  &hannahID,
+			Tags:        []string{"SOC2", "Security", "Audit"},
+			CompletedAt: &duePast12h,
+		},
+
+		// Inactive: Data Warehouse & BI Pipeline v1
+		{
+			ProjectID:   dwProjID,
+			Title:       "Benchmark ClickHouse Ingestion Throughput",
+			Description: "Run stress tests simulating 10,000 events/sec through Kafka topic into ClickHouse.",
+			Status:      "BLOCKED",
+			Priority:    "medium",
+			DueDate:     &duePast12h,
+			CreatorID:   fionaID,
+			AssigneeID:  &fionaID,
+			Tags:        []string{"ClickHouse", "DataWarehouse", "Benchmark"},
+			Comments: []struct {
+				AuthorID uuid.UUID
+				Content  string
+			}{
+				{AuthorID: fionaID, Content: "Project placed on hold pending Q3 cloud budget authorization."},
+			},
 		},
 	}
 
@@ -465,6 +806,22 @@ func main() {
 				{EventType: "TASK_CREATED", Status: "SUCCESS", ExecutionTimeMs: 8, ExecutedAt: now.Add(-5 * time.Hour)},
 			},
 		},
+		{
+			ProjectID:   aiProjID,
+			CreatorID:   dianaID,
+			Name:        "Alert Product Lead on AI Pipeline Failure",
+			TriggerType: "TASK_STATUS_CHANGED",
+			Conditions:  []map[string]any{{"field": "Status", "operator": "EQUALS", "value": "BLOCKED"}},
+			Actions:     []map[string]any{{"type": "SEND_NOTIFICATION", "params": map[string]any{"title": "Pipeline Task Blocked", "message": "AI pipeline task is blocked."}}},
+			Executions: []struct {
+				EventType       string
+				Status          string
+				ExecutionTimeMs int
+				ExecutedAt      time.Time
+			}{
+				{EventType: "TASK_STATUS_CHANGED", Status: "SUCCESS", ExecutionTimeMs: 12, ExecutedAt: now.Add(-1 * time.Hour)},
+			},
+		},
 	}
 
 	for _, wf := range workflows {
@@ -498,10 +855,12 @@ func main() {
 		}
 	}
 
-	// 6. Seed Notification Preferences & Notifications
+	// 6. Seed Notification Preferences & Notifications for all 10 employees
 	log.Info().Msg("Step 6: Seeding notification preferences & notifications...")
 	notificationTypes := []string{"TASK_ASSIGNED", "TASK_REMINDER", "WORKFLOW_ALERT", "COMMENT_MENTION", "PROJECT_INVITE"}
-	for _, uID := range []uuid.UUID{adminID, aliceID, bobID} {
+	allUserIDs := []uuid.UUID{adminID, aliceID, bobID, charlieID, dianaID, ethanID, fionaID, georgeID, hannahID, ianID, juliaID}
+
+	for _, uID := range allUserIDs {
 		for _, nt := range notificationTypes {
 			insertPref := `
 				INSERT INTO notification_preferences (user_id, type, in_app, email, created_at, updated_at)
@@ -561,10 +920,60 @@ func main() {
 			IsRead:  false,
 		},
 		{
-			UserID:  bobID,
+			UserID:  charlieID,
+			Type:    "TASK_ASSIGNED",
+			Title:   "New Task Assigned",
+			Message: "You were assigned to 'Implement Command Palette (Ctrl+K)'.",
+			IsRead:  false,
+		},
+		{
+			UserID:  dianaID,
+			Type:    "PROJECT_INVITE",
+			Title:   "Project Role Assigned",
+			Message: "You are the OWNER of 'AI Workflow Automation'.",
+			IsRead:  false,
+		},
+		{
+			UserID:  ethanID,
+			Type:    "TASK_ASSIGNED",
+			Title:   "New Task Assigned",
+			Message: "You were assigned to 'E2E Detox Automated Test Suite'.",
+			IsRead:  false,
+		},
+		{
+			UserID:  fionaID,
 			Type:    "TASK_REMINDER",
-			Title:   "Task Overdue",
-			Message: "Task 'Fix Redis connection timeout in staging' is currently overdue.",
+			Title:   "Project Status Update",
+			Message: "'Data Warehouse & BI Pipeline v1' has been marked ON HOLD.",
+			IsRead:  false,
+		},
+		{
+			UserID:  georgeID,
+			Type:    "TASK_ASSIGNED",
+			Title:   "New Task Assigned",
+			Message: "You were assigned to 'Push Notification Listener & Offline Queue'.",
+			IsRead:  false,
+		},
+		{
+			UserID:  hannahID,
+			Type:    "TASK_ASSIGNED",
+			Title:   "New Task Assigned",
+			Message: "You were assigned to 'Penetration Testing Remediation Report for SOC2'.",
+			IsRead:  true,
+			ReadAt:  &readAt1,
+		},
+		{
+			UserID:  ianID,
+			Type:    "TASK_ASSIGNED",
+			Title:   "New Task Assigned",
+			Message: "You were assigned to 'Cloud Infrastructure Terraform Modules'.",
+			IsRead:  false,
+		},
+		{
+			UserID:  juliaID,
+			Type:    "PROJECT_INVITE",
+			Title:   "Project Role Assigned",
+			Message: "You are the OWNER of 'Customer Portal 2.0'.",
 			IsRead:  false,
 		},
 	}
@@ -581,23 +990,32 @@ func main() {
 		}
 	}
 
-	fmt.Println("\n========================================================")
+	fmt.Println("\n================================================================================")
 	fmt.Println("🚀 GoFlow Full Database Seeding Completed Successfully!")
-	fmt.Println("========================================================")
+	fmt.Println("================================================================================")
 	fmt.Println("Seeded Entities:")
-	fmt.Println("  • Migrations: Applied 5 database migrations")
-	fmt.Println("  • Users:      3 accounts (Admin, Alice Smith, Bob Jones)")
-	fmt.Println("  • Projects:   3 projects with assigned members & roles")
-	fmt.Println("  • Tasks:      8 tasks across TODO, IN_PROGRESS, BLOCKED, COMPLETED")
-	fmt.Println("  • Subtasks:   Checklist items with progress status")
-	fmt.Println("  • Comments:   Collaborative task comments")
-	fmt.Println("  • Workflows:  2 active automated rules with execution logs")
-	fmt.Println("  • Alerts:     In-app notifications & user preferences")
-	fmt.Println("--------------------------------------------------------")
-	fmt.Println("Credentials for testing login:")
-	fmt.Println("--------------------------------------------------------")
-	fmt.Println("Admin:     admin@goflow.com     / Password123!")
-	fmt.Println("Employee:  employee1@goflow.com / Password123!")
-	fmt.Println("Employee:  employee2@goflow.com / Password123!")
-	fmt.Println("========================================================")
+	fmt.Println("  • Migrations: Applied all database migrations")
+	fmt.Println("  • Users:      11 accounts (1 Admin + 10 Employees)")
+	fmt.Println("  • Projects:   10 projects (5 Active, 2 Inactive, 1 Completed, 1 Archived, 1 On-Hold)")
+	fmt.Println("  • Accesses:   Granular ProjectRole matrix (OWNER, ADMIN, MEMBER, VIEWER)")
+	fmt.Println("  • Tasks:      Comprehensive tasks with TODO, IN_PROGRESS, BLOCKED, COMPLETED")
+	fmt.Println("  • Subtasks:   Granular checklists with completed states")
+	fmt.Println("  • Comments:   Collaborative task activity & discussion threads")
+	fmt.Println("  • Workflows:  Automated triggers and execution logs")
+	fmt.Println("  • Alerts:     In-app notifications & notification preferences")
+	fmt.Println("--------------------------------------------------------------------------------")
+	fmt.Println("Credentials for testing login (all accounts use Password123!):")
+	fmt.Println("--------------------------------------------------------------------------------")
+	fmt.Println("  Admin:       admin@goflow.com       | System Administrator")
+	fmt.Println("  Employee 1:  employee1@goflow.com   | Alice Smith      (Fullstack Lead)")
+	fmt.Println("  Employee 2:  employee2@goflow.com   | Bob Jones        (DevOps & Backend)")
+	fmt.Println("  Employee 3:  employee3@goflow.com   | Charlie Brown    (UI/UX Designer)")
+	fmt.Println("  Employee 4:  employee4@goflow.com   | Diana Prince     (Product Manager)")
+	fmt.Println("  Employee 5:  employee5@goflow.com   | Ethan Hunt       (QA Automation)")
+	fmt.Println("  Employee 6:  employee6@goflow.com   | Fiona Gallagher  (Data Engineer)")
+	fmt.Println("  Employee 7:  employee7@goflow.com   | George Clark     (Mobile Lead)")
+	fmt.Println("  Employee 8:  employee8@goflow.com   | Hannah Abbott    (Security Lead)")
+	fmt.Println("  Employee 9:  employee9@goflow.com   | Ian Malcolm      (Cloud Architect)")
+	fmt.Println("  Employee 10: employee10@goflow.com  | Julia Roberts    (Customer Success)")
+	fmt.Println("================================================================================")
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -83,6 +84,7 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 			r.Use(middleware.RequireAuth(jwtService))
 			r.Get("/me", userHandler.GetMe)
 			r.Patch("/me", userHandler.UpdateMe)
+			r.Post("/me/avatar", userHandler.UploadAvatar)
 			r.Get("/me/notification-preferences", notifHandler.GetPreferences)
 			r.Patch("/me/notification-preferences", notifHandler.UpdatePreferences)
 
@@ -147,6 +149,11 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 
 		wsHandler := websocket.NewHandler(wsHub, jwtService)
 		r.Get("/ws", wsHandler.ServeWS)
+
+		fs := http.StripPrefix("/api/v1/uploads/", http.FileServer(http.Dir("uploads")))
+		r.Get("/uploads/*", func(w http.ResponseWriter, r *http.Request) {
+			fs.ServeHTTP(w, r)
+		})
 	})
 
 

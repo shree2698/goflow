@@ -9,9 +9,10 @@ import (
 type ProjectStatus string
 
 const (
-	ProjectStatusActive   ProjectStatus = "active"
-	ProjectStatusArchived ProjectStatus = "archived"
-	ProjectStatusOnHold   ProjectStatus = "on_hold"
+	ProjectStatusActive    ProjectStatus = "active"
+	ProjectStatusInactive  ProjectStatus = "inactive"
+	ProjectStatusArchived  ProjectStatus = "archived"
+	ProjectStatusOnHold    ProjectStatus = "on_hold"
 	ProjectStatusCompleted ProjectStatus = "completed"
 )
 

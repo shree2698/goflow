@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, getImageUrl } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { UserPlus, Edit2, Trash2, Shield, User, Key, X, CheckCircle, FolderKanban } from "lucide-react";
 import { EmployeeProjectsModal } from "@/components/employees/EmployeeProjectsModal";
@@ -13,6 +13,7 @@ interface Employee {
   full_name: string;
   role: string;
   created_at: string;
+  avatar_url?: string;
 }
 
 export default function EmployeesPage() {
@@ -21,6 +22,8 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -116,6 +119,12 @@ export default function EmployeesPage() {
     }
   };
 
+  const totalPages = Math.ceil(employees.length / itemsPerPage);
+  const paginatedEmployees = employees.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <ProtectedRoute allowedRoles={["admin"]}>
       <div className="space-y-6 max-w-7xl mx-auto w-full">
@@ -152,9 +161,9 @@ export default function EmployeesPage() {
           <div className="py-16 text-center text-foreground-secondary font-medium">Loading employees...</div>
         ) : (
           <div className="rounded-2xl bg-canvas shadow-neu-flat overflow-hidden border border-white/60">
-            <div className="overflow-x-auto w-full">
+            <div className="overflow-x-auto overflow-y-auto max-h-[400px] w-full relative">
               <table className="w-full text-left text-sm text-foreground min-w-[540px]">
-                <thead className="bg-canvas border-b border-border/40 text-xs text-foreground-secondary uppercase tracking-wider font-bold">
+                <thead className="bg-canvas border-b border-border/40 text-xs text-foreground-secondary uppercase tracking-wider font-bold sticky top-0 z-10 shadow-sm">
                   <tr>
                     <th className="px-6 py-4">Employee</th>
                     <th className="px-6 py-4">Email</th>
@@ -164,12 +173,22 @@ export default function EmployeesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/30">
-                  {employees.map((emp) => (
+                  {paginatedEmployees.map((emp) => (
                     <tr key={emp.id} className="hover:bg-hover/30 transition-colors">
                       <td className="px-6 py-4 font-bold">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-canvas shadow-neu-flat-sm flex items-center justify-center text-accent font-bold text-xs shrink-0 border border-white/60">
-                            {emp.full_name ? emp.full_name[0] : "E"}
+                          <div className="w-9 h-9 rounded-xl bg-canvas shadow-neu-flat-sm flex items-center justify-center text-xs sm:text-sm font-bold text-accent uppercase shrink-0 border border-white/60 overflow-hidden">
+                            {emp.avatar_url ? (
+                              <img
+                                src={getImageUrl(emp.avatar_url)}
+                                alt={emp.full_name || "User"}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : emp.full_name ? (
+                              emp.full_name[0]
+                            ) : (
+                              "U"
+                            )}
                           </div>
                           <span className="truncate max-w-[160px] sm:max-w-xs">{emp.full_name}</span>
                         </div>
@@ -177,11 +196,10 @@ export default function EmployeesPage() {
                       <td className="px-6 py-4 text-foreground-secondary text-xs sm:text-sm font-medium">{emp.email}</td>
                       <td className="px-6 py-4">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold shadow-neu-flat-sm ${
-                            emp.role === "admin"
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold shadow-neu-flat-sm ${emp.role === "admin"
                               ? "bg-canvas text-lavender border border-white/60"
                               : "bg-canvas text-accent border border-white/60"
-                          }`}
+                            }`}
                         >
                           {emp.role === "admin" ? <Shield size={13} /> : <User size={13} />}
                           {emp.role || "employee"}
@@ -229,12 +247,39 @@ export default function EmployeesPage() {
                 </tbody>
               </table>
             </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-border/40 flex items-center justify-between bg-canvas rounded-b-2xl">
+                <div className="text-xs text-foreground-secondary font-medium">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, employees.length)} of {employees.length} entries
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg bg-canvas shadow-neu-btn active:shadow-neu-btn-active disabled:opacity-50 disabled:shadow-none text-xs font-semibold border border-white/60"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex items-center justify-center px-3 text-xs font-bold bg-canvas shadow-neu-pressed rounded-lg border border-white/40">
+                    {currentPage} / {totalPages}
+                  </div>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg bg-canvas shadow-neu-btn active:shadow-neu-btn-active disabled:opacity-50 disabled:shadow-none text-xs font-semibold border border-white/60"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Modal */}
         {isModalOpen && (
-          <div 
+          <div
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
             onClick={(e) => {
               if (e.target === e.currentTarget) setIsModalOpen(false);

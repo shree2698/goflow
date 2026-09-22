@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, User, Key, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, Shield, Globe } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, getImageUrl } from "@/lib/api-client";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -40,6 +40,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [fullName, setFullName] = useState("");
   const [timezone, setTimezone] = useState("UTC");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -60,6 +61,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setFullName(user.full_name || "");
       setTimezone(user.timezone || "UTC");
       setAvatarUrl(user.avatar_url || "");
+      setAvatarFile(null);
       setActiveTab(initialTab);
       setProfileSuccess(null);
       setProfileError(null);
@@ -97,10 +99,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setProfileError(null);
 
     try {
+      let finalAvatarUrl = avatarUrl;
+      if (avatarFile) {
+        const { useAuthStore } = require("../../stores/auth-store");
+        const token = useAuthStore.getState().accessToken;
+        const formData = new FormData();
+        formData.append("avatar", avatarFile);
+        
+        const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1"}/users/me/avatar`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          },
+          body: formData
+        });
+        
+        if (!uploadRes.ok) throw new Error("Failed to upload avatar");
+        const uploadData = await uploadRes.json();
+        finalAvatarUrl = uploadData.data.avatar_url;
+      }
       const payload: { full_name: string; timezone: string; avatar_url: string | null } = {
         full_name: fullName.trim(),
         timezone: timezone || "UTC",
-        avatar_url: avatarUrl.trim() ? avatarUrl.trim() : null,
+        avatar_url: finalAvatarUrl?.trim() ? finalAvatarUrl.trim() : null,
       };
 
       await apiClient.patch("/users/me", payload);
@@ -244,7 +265,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <div className="w-14 h-14 rounded-2xl bg-canvas shadow-neu-pressed flex items-center justify-center text-xl font-bold text-accent uppercase shrink-0 overflow-hidden border border-border/40">
                   {avatarUrl ? (
                     <img
-                      src={avatarUrl}
+                      src={getImageUrl(avatarUrl)}
                       alt={fullName || "User"}
                       className="w-full h-full object-cover"
                       onError={() => {
@@ -323,15 +344,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
               <div>
                 <label htmlFor="profile-avatar" className="block text-xs font-bold uppercase tracking-wider text-foreground-secondary mb-1.5">
-                  Avatar Image URL (Optional)
+                  Avatar Image (Optional)
                 </label>
                 <input
                   id="profile-avatar"
-                  type="url"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://example.com/photo.jpg"
-                  className="w-full bg-canvas shadow-neu-pressed rounded-xl px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground-secondary focus:outline-none focus:ring-1 focus:ring-accent min-h-[42px]"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setAvatarFile(file);
+                      setAvatarUrl(URL.createObjectURL(file));
+                    }
+                  }}
+                  className="w-full bg-canvas shadow-neu-pressed rounded-xl px-3.5 py-2.5 text-sm text-foreground placeholder:text-foreground-secondary focus:outline-none focus:ring-1 focus:ring-accent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
                 />
               </div>
 

@@ -164,3 +164,18 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
+export const getImageUrl = (url?: string | null): string => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
+    return url;
+  }
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8081/api/v1";
+  const host = baseUrl.replace(/\/api\/v1\/?$/, "");
+  
+  if (url.startsWith("/")) {
+    return `${host}${url}`;
+  }
+  
+  return `${host}/${url}`;
+};

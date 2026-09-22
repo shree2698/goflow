@@ -268,8 +268,20 @@ export const EmployeeProjectsModal: React.FC<EmployeeProjectsModalProps> = ({
                         <span className="text-xs sm:text-sm font-bold text-foreground truncate">
                           {proj.name}
                         </span>
-                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-canvas shadow-neu-pressed text-foreground-secondary border border-white/50">
-                          {proj.status || "active"}
+                        <span
+                          className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-md border ${
+                            (proj.status || "active").toLowerCase() === "active"
+                              ? "text-emerald-600 bg-emerald-500/15 border-emerald-500/30"
+                              : (proj.status || "").toLowerCase() === "archived"
+                              ? "text-rose-600 bg-rose-500/15 border-rose-500/30"
+                              : (proj.status || "").toLowerCase() === "on_hold"
+                              ? "text-amber-600 bg-amber-500/15 border-amber-500/30"
+                              : (proj.status || "").toLowerCase() === "completed"
+                              ? "text-indigo-600 bg-indigo-500/15 border-indigo-500/30"
+                              : "text-slate-500 bg-slate-500/15 border-slate-500/30"
+                          }`}
+                        >
+                          {(proj.status || "active").replace("_", " ")}
                         </span>
                       </div>
                       {proj.description && (

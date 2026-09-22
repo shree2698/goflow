@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
 import { useWebSocket } from "@/lib/useWebSocket";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, getImageUrl } from "@/lib/api-client";
 import { ProfileModal } from "@/components/profile/ProfileModal";
 import { LogoutConfirmModal } from "@/components/auth/LogoutConfirmModal";
 
@@ -278,7 +278,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onOpenAssistant
             <div className="w-9 h-9 rounded-xl bg-canvas shadow-neu-flat-sm flex items-center justify-center text-xs sm:text-sm font-bold text-accent uppercase shrink-0 border border-white/60 overflow-hidden">
               {user?.avatar_url ? (
                 <img
-                  src={user.avatar_url}
+                  src={getImageUrl(user.avatar_url)}
                   alt={user.full_name || "User"}
                   className="w-full h-full object-cover"
                 />

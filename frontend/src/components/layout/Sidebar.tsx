@@ -95,30 +95,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span>Employees Control</span>
             </Link>
           )}
-
-          <button
-            type="button"
-            onClick={() => {
-              onCloseMobile?.();
-              onOpenAssistant?.();
-            }}
-            className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 min-h-[44px] text-foreground-secondary hover:text-foreground hover:shadow-neu-btn bg-canvas text-left group"
-          >
-            <Bot size={18} className="text-accent group-hover:scale-110 transition-transform" />
-            <span className="flex-1">AI Task Assistant</span>
-            <span className="text-[10px] font-mono uppercase bg-canvas shadow-neu-flat-sm text-accent font-bold px-1.5 py-0.5 rounded">
-              AI
-            </span>
-          </button>
         </nav>
       </div>
 
-      <div className="p-3.5 rounded-xl shadow-neu-pressed text-xs text-foreground-secondary mt-6 bg-canvas">
+      {/* <div className="p-3.5 rounded-xl shadow-neu-pressed text-xs text-foreground-secondary mt-6 bg-canvas">
         <div className="flex items-center justify-between">
           <span className="font-medium text-foreground-secondary">GoFlow Engine</span>
           <span className="font-mono text-[10px] bg-canvas shadow-neu-flat-sm text-lavender font-bold px-2 py-0.5 rounded-lg">v1.0.0</span>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 

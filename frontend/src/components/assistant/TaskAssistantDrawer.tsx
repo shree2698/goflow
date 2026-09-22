@@ -333,7 +333,7 @@ export const TaskAssistantDrawer: React.FC<TaskAssistantDrawerProps> = ({
                   Ready
                 </span>
               </div>
-              <p className="text-xs text-foreground-secondary">Interact with your tasks in plain English</p>
+              <p className="text-xs text-foreground-secondary">Interact with your tasks</p>
             </div>
           </div>
 
@@ -546,8 +546,7 @@ export const TaskAssistantDrawer: React.FC<TaskAssistantDrawerProps> = ({
               )}
             </button>
           </form>
-          <div className="flex items-center justify-between text-[10px] text-foreground-secondary mt-2 px-1">
-            <span>LLM Tool Calling Enabled</span>
+          <div className="flex items-center justify-end text-[10px] text-foreground-secondary mt-2 px-1">
             <span className="font-mono">Press Enter to send</span>
           </div>
         </div>
