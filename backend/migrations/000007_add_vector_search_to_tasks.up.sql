@@ -1,0 +1,2 @@
+CREATE EXTENSION IF NOT EXISTS vector;
+ALTER TABLE tasks ADD COLUMN task_embedding vector(1536);

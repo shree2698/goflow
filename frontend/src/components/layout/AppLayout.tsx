@@ -9,8 +9,8 @@ import { TaskAssistantDrawer } from "@/components/assistant/TaskAssistantDrawer"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Detect active project id if navigating inside a project
   const projectMatch = pathname ? pathname.match(/^\/projects\/([a-zA-Z0-9-]+)/) : null;
@@ -22,27 +22,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setIsMobileSidebarOpen(false);
   }, [pathname]);
-
-  // Handle escape key and scroll locking for mobile sidebar
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsMobileSidebarOpen(false);
-      }
-    };
-
-    if (isMobileSidebarOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
-    } else {
-      document.body.style.overflow = "";
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isMobileSidebarOpen]);
 
   if (isAuthPage) {
     return <main className="flex-1 overflow-auto w-full min-h-screen">{children}</main>;
@@ -57,8 +36,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <div className="flex-1 flex flex-col min-w-0 w-full overflow-x-hidden">
         <Header 
-          onToggleSidebar={() => setIsMobileSidebarOpen((prev) => !prev)} 
           onOpenAssistant={() => setIsAssistantOpen(true)}
+          onToggleSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
         />
         <main className="p-3 sm:p-4 md:p-6 flex-1 overflow-x-hidden overflow-y-auto w-full">
           {children}

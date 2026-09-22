@@ -20,6 +20,7 @@ type SearchResult struct {
 	Page       int           `json:"page"`
 	Limit      int           `json:"limit"`
 	TotalPages int           `json:"total_pages"`
+	AIAnswer   string        `json:"ai_answer,omitempty"`
 }
 
 type SearchService interface {

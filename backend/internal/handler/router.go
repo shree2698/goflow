@@ -12,6 +12,7 @@ import (
 	"github.com/shree2698/goflow/backend/internal/handler/middleware"
 	"github.com/shree2698/goflow/backend/internal/repository"
 	"github.com/shree2698/goflow/backend/internal/service"
+	"github.com/shree2698/goflow/backend/internal/service/assistant"
 	"github.com/shree2698/goflow/backend/internal/websocket"
 	"github.com/shree2698/goflow/backend/pkg/eventbus"
 	"github.com/shree2698/goflow/backend/pkg/jwt"
@@ -60,7 +61,8 @@ func NewRouter(cfg *config.Config, log zerolog.Logger, db *pgxpool.Pool, redisCl
 	analyticsHandler := NewAnalyticsHandler(analyticsService)
 
 	// Search dependencies
-	searchService := service.NewSearchService(db)
+	searchLLMClient := assistant.NewLLMClient(cfg.AI)
+	searchService := service.NewSearchService(db, searchLLMClient)
 	searchHandler := NewSearchHandler(searchService)
 
 	// AI Assistant dependencies

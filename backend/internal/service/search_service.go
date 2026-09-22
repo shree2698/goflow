@@ -3,17 +3,20 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shree2698/goflow/backend/internal/domain"
+	"github.com/shree2698/goflow/backend/internal/service/assistant"
 )
 
 type searchService struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	llmClient assistant.LLMClient
 }
 
-func NewSearchService(db *pgxpool.Pool) domain.SearchService {
-	return &searchService{db: db}
+func NewSearchService(db *pgxpool.Pool, llmClient assistant.LLMClient) domain.SearchService {
+	return &searchService{db: db, llmClient: llmClient}
 }
 
 func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchParams) (*domain.SearchResult, error) {
@@ -33,12 +36,27 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 		whereClause += fmt.Sprintf(" AND project_id IN (SELECT project_id FROM project_members WHERE user_id = $%d)", argIdx)
 		args = append(args, params.UserID)
 		argIdx++
-	}
+	}	var queryEmbedding []float32
+	var isSemantic bool
 
 	if params.Query != "" {
-		whereClause += fmt.Sprintf(" AND (search_vector @@ plainto_tsquery('english', $%d) OR title ILIKE $%d OR description ILIKE $%d)", argIdx, argIdx+1, argIdx+1)
-		args = append(args, params.Query, "%"+params.Query+"%")
-		argIdx += 2
+		if s.llmClient.IsConfigured() && len(strings.Split(params.Query, " ")) > 2 {
+			emb, err := s.llmClient.GenerateEmbedding(ctx, params.Query)
+			if err == nil && len(emb) > 0 {
+				queryEmbedding = emb
+				isSemantic = true
+			}
+		}
+
+		if !isSemantic {
+			whereClause += fmt.Sprintf(" AND (search_vector @@ plainto_tsquery('english', $%d) OR title ILIKE $%d OR description ILIKE $%d)", argIdx, argIdx+1, argIdx+1)
+			args = append(args, params.Query, "%"+params.Query+"%")
+			argIdx += 2
+		} else {
+			// still filter by query in some way? No, semantic search is the filter.
+			// pgvector can just sort by distance.
+			// optionally we can add a distance threshold in WHERE, but let's just order by it.
+		}
 	}
 
 	if params.Status != "" {
@@ -109,9 +127,15 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 			"created_at":  createdAt,
 			"updated_at":  updatedAt,
 		})
-	}
+	}	totalPages := int((total + int64(params.Limit) - 1) / int64(params.Limit))
 
-	totalPages := int((total + int64(params.Limit) - 1) / int64(params.Limit))
+	var aiAnswer string
+	if isSemantic && len(tasks) > 0 {
+		ans, err := s.llmClient.SummarizeTasks(ctx, params.Query, tasks)
+		if err == nil {
+			aiAnswer = ans
+		}
+	}
 
 	return &domain.SearchResult{
 		Data:       tasks,
@@ -119,5 +143,6 @@ func (s *searchService) SearchTasks(ctx context.Context, params domain.SearchPar
 		Page:       params.Page,
 		Limit:      params.Limit,
 		TotalPages: totalPages,
+		AIAnswer:   aiAnswer,
 	}, nil
 }

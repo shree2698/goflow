@@ -109,11 +109,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
-      <aside className="hidden md:flex md:w-64 bg-canvas min-h-screen p-5 flex-col justify-between shrink-0 shadow-neu-flat-sm border-r border-border/40 z-20">
-        {navContent}
-      </aside>
-
       {/* Mobile Drawer Backdrop */}
       {isOpenMobile && (
         <div

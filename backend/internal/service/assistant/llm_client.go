@@ -18,6 +18,8 @@ import (
 type LLMClient interface {
 	IsConfigured() bool
 	DetectToolCall(ctx context.Context, message string, history []domain.AssistantMessage, systemPrompt string) (*DetectedIntent, string, error)
+	GenerateEmbedding(ctx context.Context, text string) ([]float32, error)
+	SummarizeTasks(ctx context.Context, query string, tasks []interface{}) (string, error)
 }
 
 type llmClient struct {
@@ -366,4 +368,137 @@ func (c *llmClient) DetectToolCall(
 		ToolName:  "",
 		Arguments: map[string]any{},
 	}, choice.Content, nil
+}
+
+type openAIEmbeddingRequest struct {
+	Model string `json:"model"`
+	Input string `json:"input"`
+}
+
+type openAIEmbeddingResponse struct {
+	Data []struct {
+		Embedding []float32 `json:"embedding"`
+	} `json:"data"`
+	Error *struct {
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+}
+
+func (c *llmClient) GenerateEmbedding(ctx context.Context, text string) ([]float32, error) {
+	if !c.IsConfigured() {
+		return nil, fmt.Errorf("llm client is not configured")
+	}
+
+	endpoint := "https://api.openai.com/v1/embeddings"
+	reqBody := openAIEmbeddingRequest{
+		Model: "text-embedding-3-small",
+		Input: text,
+	}
+
+	jsonBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	apiKey := c.getAPIKey()
+	if apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var embResp openAIEmbeddingResponse
+	if err := json.Unmarshal(bodyBytes, &embResp); err != nil {
+		return nil, err
+	}
+
+	if embResp.Error != nil && embResp.Error.Message != "" {
+		return nil, fmt.Errorf("embedding api error: %s", embResp.Error.Message)
+	}
+	if len(embResp.Data) == 0 {
+		return nil, fmt.Errorf("empty embedding response")
+	}
+
+	return embResp.Data[0].Embedding, nil
+}
+
+func (c *llmClient) SummarizeTasks(ctx context.Context, query string, tasks []interface{}) (string, error) {
+	if !c.IsConfigured() {
+		return "", fmt.Errorf("llm client is not configured")
+	}
+
+	tasksBytes, _ := json.Marshal(tasks)
+	prompt := fmt.Sprintf("The user searched for: %q\nHere are the most relevant tasks:\n%s\nPlease provide a helpful, concise summary of these tasks answering the user's query.", query, string(tasksBytes))
+
+	endpoint := "https://api.openai.com/v1/chat/completions"
+	model := c.cfg.Model
+	if model == "" {
+		model = "gpt-4o-mini"
+	}
+
+	reqBody := openAIChatRequest{
+		Model: model,
+		Messages: []openAIChatMessage{
+			{Role: "system", Content: "You are a helpful task management assistant. Summarize tasks clearly and concisely."},
+			{Role: "user", Content: prompt},
+		},
+		Temperature: 0.3,
+	}
+
+	jsonBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewBuffer(jsonBytes))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	apiKey := c.getAPIKey()
+	if apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var chatResp openAIChatResponse
+	if err := json.Unmarshal(bodyBytes, &chatResp); err != nil {
+		return "", err
+	}
+
+	if chatResp.Error != nil && chatResp.Error.Message != "" {
+		return "", fmt.Errorf("llm api error: %s", chatResp.Error.Message)
+	}
+
+	if len(chatResp.Choices) == 0 {
+		return "", fmt.Errorf("empty response from llm")
+	}
+
+	return chatResp.Choices[0].Message.Content, nil
 }
